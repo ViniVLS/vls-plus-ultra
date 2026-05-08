@@ -49,8 +49,38 @@ export class SupabaseService {
   }
 
   private async syncWithCloud() {
-    if (!this.currentUser()) return;
-    console.log('Sincronizando com a nuvem...');
+    const user = this.currentUser();
+    if (!user || !this.isOnline()) return;
+
+    console.log('📡 Conexão restaurada! Iniciando sincronia de dados...');
+
+    try {
+      // 1. Sincronizar Playlists
+      const localPlaylists = await this.db.getAll('playlists');
+      for (const pl of localPlaylists) {
+        await this.client.from('playlists').upsert({
+          user_id: user.id,
+          name: pl.nome || pl.name,
+          tracks: pl.musicas || pl.tracks
+        });
+      }
+
+      // 2. Sincronizar Favoritos
+      const localFavs = await this.db.get('settings', 'favorites');
+      if (localFavs?.data && Array.isArray(localFavs.data)) {
+        for (const fav of localFavs.data) {
+          await this.client.from('favorites').upsert({
+            user_id: user.id,
+            track_name: fav.name,
+            track_metadata: fav
+          });
+        }
+      }
+
+      console.log('✅ Sincronia concluída com sucesso!');
+    } catch (e) {
+      console.error('❌ Falha na sincronia automática:', e);
+    }
   }
 
   async signUp(email: string, pass: string) {
