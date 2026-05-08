@@ -18,6 +18,7 @@ import { LibraryComponent } from './library/library.component';
 import { VideoPlayerComponent } from './components/video-player/video-player.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { DialogComponent } from './components/dialog/dialog.component';
+import { ResetPasswordComponent } from './auth/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -39,6 +40,7 @@ import { DialogComponent } from './components/dialog/dialog.component';
     LibraryComponent,
     ToastComponent,
     DialogComponent,
+    ResetPasswordComponent,
     ServiceWorkerModule.register('ngsw-worker.js', {
       enabled: !isDevMode(),
       // Register the ServiceWorker as soon as the application is stable

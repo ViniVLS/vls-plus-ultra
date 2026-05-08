@@ -211,7 +211,7 @@ export class AuthService {
 
   async resetPassword(email: string) {
     const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/login'
+      redirectTo: window.location.origin + '/reset-password'
     });
     if (error) throw error;
     return true;
