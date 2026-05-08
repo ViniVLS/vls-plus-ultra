@@ -173,20 +173,31 @@ export class AuthService {
 
     const updatedUser = { ...current, ...profileData };
     
-    const { error } = await this.supabase
-      .from('profiles')
-      .upsert({
-        id: current.id,
-        full_name: profileData.fullName,
-        cpf: profileData.cpf,
-        phone: profileData.phone,
-        address: profileData.address,
-        updated_at: new Date()
-      });
-
-    if (error) console.error('Erro ao sincronizar com Supabase', error);
-
+    // Atualiza local imediatamente (UX)
     await this.saveSession(updatedUser);
+
+    try {
+      const { error } = await this.supabase
+        .from('profiles')
+        .upsert({
+          id: current.id,
+          full_name: profileData.fullName,
+          cpf: profileData.cpf,
+          phone: profileData.phone,
+          address: profileData.address,
+          updated_at: new Date()
+        });
+
+      if (error) {
+        console.error('Erro de permissão no Supabase (Verifique as políticas RLS):', error);
+        // Não jogamos erro para o usuário pois o local já salvou (Offline-First)
+      } else {
+        console.log('✅ Perfil sincronizado com sucesso.');
+      }
+    } catch (e) {
+      console.error('Falha na rede durante sincronia de perfil:', e);
+    }
+
     return updatedUser;
   }
 
