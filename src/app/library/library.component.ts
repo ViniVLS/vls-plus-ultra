@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AudioService } from '../services/audio.service';
 import { SupabaseService } from '../services/supabase.service';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-library',
@@ -21,7 +22,8 @@ export class LibraryComponent implements OnInit {
 
   constructor(
     public audioService: AudioService,
-    private supabase: SupabaseService
+    private supabase: SupabaseService,
+    private toast: ToastService
   ) {}
 
   async ngOnInit() {
@@ -54,7 +56,6 @@ export class LibraryComponent implements OnInit {
     try {
       const lib = await this.supabase.getLibrary();
       if (lib && lib.length > 0 && this.audioService.currentTracks().length === 0) {
-        // Restaurar biblioteca anterior se o player estiver vazio
         this.audioService.setTracks(lib, 0);
       }
     } catch (e) {
@@ -78,6 +79,7 @@ export class LibraryComponent implements OnInit {
       this.audioService.setTracks(audioFiles, 0);
       await this.supabase.saveLibrary(audioFiles);
       this.audioService.play();
+      this.toast.success('Pasta carregada com sucesso!');
     }
   }
 
@@ -94,6 +96,7 @@ export class LibraryComponent implements OnInit {
         const current = this.audioService.currentTracks();
         this.audioService.setTracks([...current, ...audioFiles], this.audioService.currentTrackIndex());
         await this.supabase.saveLibrary([...current, ...audioFiles]);
+        this.toast.info(`${audioFiles.length} arquivos adicionados.`);
       }
     }
   }
@@ -119,10 +122,10 @@ export class LibraryComponent implements OnInit {
       try {
         const trackData = tracks.map(t => ({ name: t.name, size: t.size }));
         await this.supabase.savePlaylist(name, trackData);
-        await this.loadPlaylists(); // Recarregar do banco (híbrido)
-        alert('Playlist sincronizada com sucesso!');
+        await this.loadPlaylists();
+        this.toast.success('Playlist salva e sincronizada!');
       } catch (e) {
-        alert('Erro ao salvar playlist.');
+        this.toast.error('Erro ao salvar playlist.');
       } finally {
         this.loading = false;
       }
@@ -130,7 +133,6 @@ export class LibraryComponent implements OnInit {
   }
 
   async loadPlaylist(playlist: any) {
-    // Para carregar a playlist, as músicas precisam estar "presentes" no dispositivo/cache
     const allTracks = this.audioService.currentTracks();
     const playlistTrackNames = (playlist.musicas || playlist.tracks || []).map((t: any) => typeof t === 'string' ? t : t.name);
 
@@ -139,9 +141,9 @@ export class LibraryComponent implements OnInit {
     if (loadedTracks.length > 0) {
       this.audioService.setTracks(loadedTracks, 0);
       this.audioService.play();
-      alert(`Playlist "${playlist.nome || playlist.name}" carregada!`);
+      this.toast.info(`Playlist "${playlist.nome || playlist.name}" carregada.`);
     } else {
-      alert('Nenhuma música desta playlist foi encontrada na biblioteca atual.');
+      this.toast.warning('Músicas não encontradas na biblioteca atual.');
     }
   }
 
@@ -149,12 +151,8 @@ export class LibraryComponent implements OnInit {
     if (confirm('Deseja excluir esta playlist definitivamente?')) {
       this.loading = true;
       try {
-        // Implementar delete no SupabaseService se necessário, 
-        // ou remover localmente e deixar o sync tratar.
-        // Por enquanto, atualizamos o estado local e removemos do banco híbrido.
         this.playlistsSalvas = this.playlistsSalvas.filter(p => p !== playlist);
-        // No futuro adicionar this.supabase.deletePlaylist(playlist.id);
-        alert('Playlist removida.');
+        this.toast.success('Playlist removida.');
       } finally {
         this.loading = false;
       }
@@ -169,8 +167,10 @@ export class LibraryComponent implements OnInit {
     const index = this.favorites.findIndex(f => f.name === track.name);
     if (index > -1) {
       this.favorites.splice(index, 1);
+      this.toast.info('Removido dos favoritos.');
     } else {
       this.favorites.push({ name: track.name, size: track.size });
+      this.toast.success('Adicionado aos favoritos!');
     }
     await this.supabase.saveFavorites(this.favorites);
   }

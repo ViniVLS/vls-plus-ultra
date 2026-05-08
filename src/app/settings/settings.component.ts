@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService, User } from '../services/auth.service';
+import { ToastService } from '../services/toast.service';
 
 @Component({
   selector: 'app-settings',
@@ -16,7 +17,6 @@ export class SettingsComponent implements OnInit {
   password = '';
   isLogin = true;
   loading = false;
-  message = '';
 
   // Campos de Perfil
   fullName = '';
@@ -36,7 +36,10 @@ export class SettingsComponent implements OnInit {
   playlists: any[] = [];
   favorites: any[] = [];
 
-  constructor(public authService: AuthService) {}
+  constructor(
+    public authService: AuthService,
+    private toast: ToastService
+  ) {}
 
   get user() {
     return this.authService.user();
@@ -69,17 +72,18 @@ export class SettingsComponent implements OnInit {
 
   async handleAuth() {
     this.loading = true;
-    this.message = '';
     try {
       if (this.isLogin) {
         await this.authService.login(this.email, this.password);
+        this.toast.success('Bem-vindo de volta!');
       } else {
         await this.authService.register(this.email, this.password, 'Usuário VLS');
+        this.toast.success('Conta criada com sucesso!');
       }
       this.loadUserData();
       this.fillForm();
     } catch (e: any) {
-      this.message = e.message;
+      this.toast.error(e.message || 'Erro na autenticação.');
     } finally {
       this.loading = false;
     }
@@ -99,11 +103,12 @@ export class SettingsComponent implements OnInit {
         this.address.neighborhood = data.bairro;
         this.address.city = data.localidade;
         this.address.state = data.uf;
+        this.toast.info('Endereço localizado!');
       } else {
-        this.message = 'CEP não encontrado.';
+        this.toast.warning('CEP não encontrado.');
       }
     } catch (e) {
-      this.message = 'Erro ao buscar CEP.';
+      this.toast.error('Erro ao buscar servidor ViaCEP.');
     } finally {
       this.loading = false;
     }
@@ -111,7 +116,6 @@ export class SettingsComponent implements OnInit {
 
   async saveProfile() {
     this.loading = true;
-    this.message = '';
     try {
       await this.authService.updateProfile({
         fullName: this.fullName,
@@ -119,9 +123,9 @@ export class SettingsComponent implements OnInit {
         phone: this.phone,
         address: this.address
       });
-      this.message = 'Perfil atualizado com sucesso!';
+      this.toast.success('Perfil atualizado e sincronizado!');
     } catch (e: any) {
-      this.message = e.message;
+      this.toast.error(e.message || 'Erro ao salvar perfil.');
     } finally {
       this.loading = false;
     }
@@ -131,10 +135,10 @@ export class SettingsComponent implements OnInit {
     this.authService.logout();
     this.playlists = [];
     this.favorites = [];
+    this.toast.info('Você saiu da conta.');
   }
 
   toggleMode() {
     this.isLogin = !this.isLogin;
-    this.message = '';
   }
 }
