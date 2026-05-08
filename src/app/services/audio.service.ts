@@ -2,6 +2,7 @@ import { Injectable, signal, effect } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { EqualizerService } from '../equalizer/equalizer.service';
 import { AuthService } from './auth.service';
+import { MediaControlsService } from './media-controls.service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +22,8 @@ export class AudioService {
   constructor(
     private supabase: SupabaseService,
     private authService: AuthService,
-    private equalizer: EqualizerService
+    private equalizer: EqualizerService,
+    private mediaControls: MediaControlsService
   ) {
     this.audio.ontimeupdate = () => {
       this.currentTime.set(this.audio.currentTime);
@@ -35,8 +37,15 @@ export class AudioService {
       this.next();
     };
 
-    this.audio.onplay = () => this.isPlaying.set(true);
-    this.audio.onpause = () => this.isPlaying.set(false);
+    this.audio.onplay = () => {
+      this.isPlaying.set(true);
+      this.mediaControls.updatePlayState(true);
+    };
+
+    this.audio.onpause = () => {
+      this.isPlaying.set(false);
+      this.mediaControls.updatePlayState(false);
+    };
 
     // Efeito para parar a música se o usuário sair
     effect(() => {
@@ -45,6 +54,97 @@ export class AudioService {
         this.stop();
       }
     }, { allowSignalWrites: true });
+
+    // Setup media notification button handlers
+    this.setupMediaControls();
+  }
+
+  /**
+   * Configure media notification button handlers.
+   * When user taps play/pause/next/previous on the Android notification,
+   * these handlers execute the corresponding action.
+   */
+  private setupMediaControls() {
+    // Native plugin handler (Android foreground service)
+    this.mediaControls.onAction((action: string) => {
+      switch (action) {
+        case 'play':
+          this.play();
+          break;
+        case 'pause':
+          this.pause();
+          break;
+        case 'next':
+          this.next();
+          break;
+        case 'previous':
+          this.previous();
+          break;
+        case 'stop':
+          this.stop();
+          this.mediaControls.stopService();
+          break;
+      }
+    });
+
+    // Web Media Session API handler (fallback / Chrome)
+    this.mediaControls.setupWebMediaSessionActions({
+      play: () => this.play(),
+      pause: () => this.pause(),
+      next: () => this.next(),
+      previous: () => this.previous(),
+      stop: () => {
+        this.stop();
+        this.mediaControls.stopService();
+      }
+    });
+  }
+
+  /**
+   * Update the media notification with current track info.
+   */
+  private updateMediaNotification() {
+    const tracks = this.currentTracks();
+    const index = this.currentTrackIndex();
+    const track = tracks[index];
+
+    if (!track) return;
+
+    // Clean the filename for display
+    const title = this.cleanTrackName(track.name);
+    const artist = this.extractArtist(track);
+    const artwork = this.currentTrackArt() || undefined;
+
+    // Start or update the foreground service notification
+    if (!this.isPlaying()) {
+      this.mediaControls.startService(title, artist, artwork);
+    } else {
+      this.mediaControls.updateMetadata(title, artist, artwork, this.isPlaying());
+    }
+  }
+
+  /**
+   * Clean a filename to a readable track name.
+   * Removes extension and common prefixes.
+   */
+  private cleanTrackName(filename: string): string {
+    if (!filename) return 'Faixa Desconhecida';
+    // Remove file extension
+    return filename.replace(/\.(mp3|m4a|flac|wav|ogg|aac|wma)$/i, '').trim();
+  }
+
+  /**
+   * Extract artist from track metadata if available.
+   */
+  private extractArtist(track: any): string {
+    if (track.artist) return track.artist;
+    // Try to extract from filename pattern "Artist - Title"
+    const name = this.cleanTrackName(track.name);
+    const parts = name.split(' - ');
+    if (parts.length >= 2) {
+      return parts[0].trim();
+    }
+    return '';
   }
 
   async setTracks(tracks: any[], index: number = 0) {
@@ -128,11 +228,27 @@ export class AudioService {
             const artUrl = `data:${format};base64,${window.btoa(base64String)}`;
             this.currentTrackArt.set(artUrl);
           }
+
+          // Store extracted metadata on the track object
+          const tracks = this.currentTracks();
+          const index = this.currentTrackIndex();
+          if (tracks[index]) {
+            if (tag.tags.title) tracks[index].title = tag.tags.title;
+            if (tag.tags.artist) tracks[index].artist = tag.tags.artist;
+          }
+
+          // Update notification with metadata (title, artist, artwork)
+          this.updateMediaNotification();
         },
         onError: (error: any) => {
           console.warn('Metadata extraction error:', error);
+          // Still update notification with filename
+          this.updateMediaNotification();
         }
       });
+    } else {
+      // No jsmediatags available, update with filename only
+      this.updateMediaNotification();
     }
   }
 
@@ -168,6 +284,7 @@ export class AudioService {
     this.audio.pause();
     this.audio.currentTime = 0;
     this.isPlaying.set(false);
+    this.mediaControls.stopService();
   }
 
   next() {
