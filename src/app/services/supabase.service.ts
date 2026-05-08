@@ -34,7 +34,7 @@ export class SupabaseService {
           storage: capacitorStorage,
           autoRefreshToken: true,
           persistSession: true,
-          detectSessionInUrl: false
+          detectSessionInUrl: true
         }
       }
     );

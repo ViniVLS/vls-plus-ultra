@@ -97,6 +97,22 @@ export class ResetPasswordComponent {
     private router: Router
   ) {}
 
+  async ngOnInit() {
+    // Dá um tempo para o Supabase processar o hash da URL
+    this.loading = true;
+    const { data: { session } } = await this.supabase.client.auth.getSession();
+    if (!session) {
+      console.warn('Sessão não detectada na URL. Tentando aguardar...');
+      // Pequeno delay para garantir detecção no Android
+      await new Promise(r => setTimeout(r, 1500));
+      const { data: { session: retrySession } } = await this.supabase.client.auth.getSession();
+      if (!retrySession) {
+        this.error = 'Link de recuperação expirado ou inválido. Tente gerar um novo e-mail.';
+      }
+    }
+    this.loading = false;
+  }
+
   async onResetPassword() {
     if (this.password !== this.confirmPassword) {
       this.error = 'As senhas não coincidem.';
