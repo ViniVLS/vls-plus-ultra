@@ -1,6 +1,8 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatabaseService } from './database.service';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { environment } from '../../environments/environment';
 
 export interface User {
   id: string;
@@ -25,53 +27,112 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
+  private supabase: SupabaseClient;
   private currentUser = signal<User | null>(null);
   
   public user = computed(() => this.currentUser());
   public isAuthenticated = computed(() => !!this.currentUser());
 
   constructor(private router: Router, private db: DatabaseService) {
+    this.supabase = createClient(environment.supabase.url, environment.supabase.key);
     this.checkSession();
   }
 
   private async checkSession() {
-    const savedUser = await this.db.get('settings', 'current_session');
-    if (savedUser) {
-      this.currentUser.set(savedUser.data);
+    // 1. Tentar carregar sessão do Supabase (Cloud)
+    const { data: { session } } = await this.supabase.auth.getSession();
+    
+    if (session?.user) {
+      // Carregar perfil estendido da tabela 'profiles'
+      const { data: profile } = await this.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      const user: User = {
+        id: session.user.id,
+        email: session.user.email!,
+        username: profile?.username || 'Usuário',
+        fullName: profile?.full_name,
+        cpf: profile?.cpf,
+        phone: profile?.phone,
+        address: profile?.address
+      };
+      
+      this.currentUser.set(user);
+      await this.db.set('settings', { key: 'current_session', data: user });
+    } else {
+      // 2. Fallback para sessão local (Offline/Android)
+      const savedUser = await this.db.get('settings', 'current_session');
+      if (savedUser) {
+        this.currentUser.set(savedUser.data);
+      }
     }
   }
 
   async register(email: string, password: string, username: string) {
+    // 1. Registro no Supabase
+    const { data, error } = await this.supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username } }
+    });
+
+    if (error) throw error;
+    if (!data.user) throw new Error('Falha no cadastro');
+
     const newUser: User = {
-      id: Math.random().toString(36).substring(2),
+      id: data.user.id,
       email: email,
       username: username
     };
 
-    const users = await this.db.get('settings', 'all_users') || { key: 'all_users', data: [] };
-    
-    if (users.data.find((u: any) => u.email === email)) {
-      throw new Error('Este e-mail já está cadastrado.');
-    }
-
-    users.data.push({ ...newUser, password });
-    await this.db.set('settings', users);
-
+    // 2. Salvar localmente (Android _TEMP)
     await this.saveSession(newUser);
     return newUser;
   }
 
   async login(email: string, password: string) {
-    const users = await this.db.get('settings', 'all_users') || { key: 'all_users', data: [] };
-    const foundUser = users.data.find((u: any) => u.email === email && u.password === password);
+    // 1. Login no Supabase
+    const { data, error } = await this.supabase.auth.signInWithPassword({
+      email,
+      password
+    });
 
-    if (!foundUser) {
-      throw new Error('E-mail ou senha incorretos.');
+    if (error) {
+      // Tentativa de login offline se houver erro de rede
+      if (error.message.includes('Fetch')) {
+        const users = await this.db.get('settings', 'all_users') || { key: 'all_users', data: [] };
+        const foundUser = users.data.find((u: any) => u.email === email && u.password === password);
+        if (foundUser) {
+          const { password: _, ...userWithoutPassword } = foundUser;
+          await this.saveSession(userWithoutPassword);
+          return userWithoutPassword;
+        }
+      }
+      throw error;
     }
 
-    const { password: _, ...userWithoutPassword } = foundUser;
-    await this.saveSession(userWithoutPassword);
-    return userWithoutPassword;
+    // 2. Carregar perfil estendido
+    const { data: profile } = await this.supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    const user: User = {
+      id: data.user.id,
+      email: data.user.email!,
+      username: profile?.username || 'Usuário',
+      fullName: profile?.full_name,
+      cpf: profile?.cpf,
+      phone: profile?.phone,
+      address: profile?.address
+    };
+
+    await this.saveSession(user);
+    return user;
   }
 
   private async saveSession(user: User) {
@@ -86,19 +147,27 @@ export class AuthService {
 
     const updatedUser = { ...current, ...profileData };
     
-    const users = await this.db.get('settings', 'all_users') || { key: 'all_users', data: [] };
-    const index = users.data.findIndex((u: any) => u.email === current.email);
-    
-    if (index !== -1) {
-      users.data[index] = { ...users.data[index], ...profileData };
-      await this.db.set('settings', users);
-    }
+    // 1. Atualizar no Supabase (Nuvem)
+    const { error } = await this.supabase
+      .from('profiles')
+      .upsert({
+        id: current.id,
+        full_name: profileData.fullName,
+        cpf: profileData.cpf,
+        phone: profileData.phone,
+        address: profileData.address,
+        updated_at: new Date()
+      });
 
+    if (error) console.error('Erro ao sincronizar com Supabase', error);
+
+    // 2. Sempre atualizar localmente (Android _TEMP)
     await this.saveSession(updatedUser);
     return updatedUser;
   }
 
   async logout() {
+    await this.supabase.auth.signOut();
     await this.db.delete('settings', 'current_session');
     this.currentUser.set(null);
     this.router.navigate(['/login']);
