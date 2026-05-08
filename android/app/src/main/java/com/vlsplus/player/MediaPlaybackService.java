@@ -29,7 +29,7 @@ import androidx.media.app.NotificationCompat.MediaStyle;
 public class MediaPlaybackService extends Service {
 
     private static final String TAG = "MediaPlaybackService";
-    private static final String CHANNEL_ID = "vls_plus_media_channel_v2";
+    private static final String CHANNEL_ID = "vls_plus_media_channel_v3";
     private static final int NOTIFICATION_ID = 1001;
 
     public static final String ACTION_PLAY = "com.vlsplus.player.ACTION_PLAY";
@@ -81,7 +81,7 @@ public class MediaPlaybackService extends Service {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "VLS PLUS Player",
-                NotificationManager.IMPORTANCE_DEFAULT // Elevado para garantir tela de bloqueio
+                NotificationManager.IMPORTANCE_HIGH // MAX priority for lockscreen
             );
             channel.setDescription("Controles de reprodução de música");
             channel.setShowBadge(false);
@@ -145,7 +145,8 @@ public class MediaPlaybackService extends Service {
                 PowerManager.PARTIAL_WAKE_LOCK,
                 "VLSPlus::MediaWakeLock"
             );
-            wakeLock.acquire(10 * 60 * 1000L); // 10 min max, renewed on updates
+            // Acquire indefinitely to prevent Doze/WebView throttling during playback
+            wakeLock.acquire(); 
         }
     }
 
@@ -210,7 +211,7 @@ public class MediaPlaybackService extends Service {
         updateNotification();
         // Renew wake lock
         if (wakeLock != null && !wakeLock.isHeld()) {
-            wakeLock.acquire(10 * 60 * 1000L);
+            wakeLock.acquire();
         }
     }
 
@@ -307,10 +308,11 @@ public class MediaPlaybackService extends Service {
             .setContentIntent(openAppPendingIntent)
             .setDeleteIntent(stopIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT) // Important for lockscreen media
             .setOngoing(isPlaying)
             .setShowWhen(false)
             .setOnlyAlertOnce(true)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+            .setPriority(NotificationCompat.PRIORITY_MAX);
 
         if (currentArt != null) {
             builder.setLargeIcon(currentArt);
