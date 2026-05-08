@@ -73,7 +73,7 @@ export class SupabaseService {
             user_id: userId,
             name: pl.nome || pl.name,
             tracks: pl.musicas || pl.tracks
-          });
+          }, { onConflict: 'user_id,name' });
           
           if (error) console.warn('Falha ao gravar playlist na nuvem:', error.message);
         }
@@ -88,7 +88,7 @@ export class SupabaseService {
           track_metadata: f
         }));
         
-        const { error: favError } = await this.client.from('favorites').upsert(favsToSync);
+        const { error: favError } = await this.client.from('favorites').upsert(favsToSync, { onConflict: 'user_id,track_name' });
         if (favError) console.warn('Falha ao gravar favoritos na nuvem:', favError.message);
       }
 
@@ -109,7 +109,7 @@ export class SupabaseService {
         user_id: session.user.id,
         name: name,
         tracks: tracks
-      });
+      }, { onConflict: 'user_id,name' });
       if (error) console.error('Erro ao salvar playlist no Supabase:', error.message);
       else console.log('✅ Playlist salva na nuvem.');
     } else {

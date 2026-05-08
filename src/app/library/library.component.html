@@ -57,8 +57,8 @@
       <div class="playlist-card glassmorphism" *ngFor="let p of playlistsSalvas; let i = index">
         <div class="card-icon">🎵</div>
         <div class="card-info">
-          <h4 class="playlist-name">{{ p.nome }}</h4>
-          <span class="playlist-count">{{ p.musicas?.length || 0 }} Faixas</span>
+          <h4 class="playlist-name">{{ p.name || p.nome }}</h4>
+          <span class="playlist-count">{{ (p.tracks?.length || p.musicas?.length || 0) }} Faixas</span>
         </div>
         <div class="card-actions">
           <button class="btn-playlist-load" (click)="loadPlaylist(p)">Carregar</button>
