@@ -33,13 +33,20 @@ export class AuthService {
   public isAuthenticated = computed(() => !!this.currentUser());
   public isLoadingAvatar = computed(() => this.loadingAvatar());
 
+  private initPromise: Promise<void>;
+
   constructor(
     private router: Router, 
     private db: DatabaseService,
     private supabaseService: SupabaseService
   ) {
     this.initAuthListener();
-    this.checkSession();
+    this.initPromise = this.checkSession();
+  }
+
+  public async isReady(): Promise<boolean> {
+    await this.initPromise;
+    return this.isAuthenticated();
   }
 
   private get supabase() {

@@ -9,19 +9,20 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
+import android.Manifest;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
-/**
- * Capacitor Plugin to bridge Angular's AudioService with
- * the native Android MediaPlaybackService.
- *
- * Methods available from JavaScript:
- * - startService(title, artist, artwork, isPlaying)
- * - updateMetadata(title, artist, artwork, isPlaying)
- * - updatePlayState(isPlaying)
- * - stopService()
- */
-@CapacitorPlugin(name = "MediaControls")
+@CapacitorPlugin(
+    name = "MediaControls",
+    permissions = {
+        @Permission(
+            alias = "notifications",
+            strings = { Manifest.permission.POST_NOTIFICATIONS }
+        )
+    }
+)
 public class MediaControlsPlugin extends Plugin {
 
     private static final String TAG = "MediaControlsPlugin";
@@ -65,6 +66,26 @@ public class MediaControlsPlugin extends Plugin {
 
     @PluginMethod()
     public void startService(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (getPermissionState("notifications") != com.getcapacitor.PermissionState.GRANTED) {
+                requestPermissionForAlias("notifications", call, "notificationsPermsCallback");
+                return;
+            }
+        }
+        executeStartService(call);
+    }
+
+    @PermissionCallback
+    private void notificationsPermsCallback(PluginCall call) {
+        if (getPermissionState("notifications") == com.getcapacitor.PermissionState.GRANTED) {
+            executeStartService(call);
+        } else {
+            // Still start service, but the notification won't show
+            executeStartService(call);
+        }
+    }
+
+    private void executeStartService(PluginCall call) {
         String title = call.getString("title", "VLS PLUS");
         String artist = call.getString("artist", "");
         String artwork = call.getString("artwork", "");
