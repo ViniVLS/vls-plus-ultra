@@ -35,6 +35,8 @@ export class SettingsComponent implements OnInit {
 
   playlists: any[] = [];
   favorites: any[] = [];
+  avatarPreview: string | null = null;
+  uploadingAvatar = false;
 
   constructor(
     public authService: AuthService,
@@ -50,6 +52,44 @@ export class SettingsComponent implements OnInit {
     if (u) {
       this.loadUserData();
       this.fillForm();
+      if (u.avatarUrl) {
+        this.avatarPreview = u.avatarUrl;
+      }
+    }
+  }
+
+  triggerAvatarUpload() {
+    const input = document.getElementById('avatarInput') as HTMLInputElement;
+    input?.click();
+  }
+
+  async onAvatarSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      this.toast.warning('Selecione uma imagem válida.');
+      return;
+    }
+
+    this.uploadingAvatar = true;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this.avatarPreview = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+
+    try {
+      const avatarUrl = await this.authService.uploadAvatar(file);
+      this.avatarPreview = avatarUrl;
+      this.toast.success('Foto de perfil atualizada!');
+    } catch (e: any) {
+      this.toast.error(e.message || 'Erro ao fazer upload da foto.');
+      this.avatarPreview = this.user?.avatarUrl || null;
+    } finally {
+      this.uploadingAvatar = false;
     }
   }
 

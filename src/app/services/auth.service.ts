@@ -27,9 +27,11 @@ export interface User {
 })
 export class AuthService {
   private currentUser = signal<User | null>(null);
+  private loadingAvatar = signal<boolean>(false);
   
   public user = computed(() => this.currentUser());
   public isAuthenticated = computed(() => !!this.currentUser());
+  public isLoadingAvatar = computed(() => this.loadingAvatar());
 
   constructor(
     private router: Router, 
@@ -74,7 +76,8 @@ export class AuthService {
           fullName: profile.full_name,
           cpf: profile.cpf,
           phone: profile.phone,
-          address: profile.address
+          address: profile.address,
+          avatarUrl: profile.avatar_url
         };
         
         this.currentUser.set(user);
@@ -173,6 +176,49 @@ export class AuthService {
     this.router.navigate(['/home']);
   }
 
+  async uploadAvatar(file: File): Promise<string> {
+    const current = this.currentUser();
+    if (!current) throw new Error('Usuário não autenticado');
+
+    this.loadingAvatar.set(true);
+    
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const filePath = `${current.id}/avatar.${ext}`;
+      const fileBuffer = await this.fileToArrayBuffer(file);
+
+      const { data, error } = await this.supabase.storage
+        .from('avatars')
+        .upload(filePath, fileBuffer, {
+          contentType: file.type,
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      const { data: urlData } = this.supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const avatarUrl = urlData.publicUrl;
+      
+      await this.updateProfile({ avatarUrl });
+      
+      return avatarUrl;
+    } finally {
+      this.loadingAvatar.set(false);
+    }
+  }
+
+  private fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
   async updateProfile(profileData: Partial<User>) {
     const current = this.currentUser();
     if (!current) throw new Error('Usuário não autenticado');
@@ -191,6 +237,7 @@ export class AuthService {
           cpf: profileData.cpf,
           phone: profileData.phone,
           address: profileData.address,
+          avatar_url: profileData.avatarUrl,
           updated_at: new Date()
         });
 

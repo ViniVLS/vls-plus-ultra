@@ -58,6 +58,14 @@
     align-items: center;
     gap: 12px;
 
+    .header-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--color-primary);
+    }
+
     .app-version-tag {
       font-size: 0.65rem;
       color: rgba(255, 255, 255, 0.4);
