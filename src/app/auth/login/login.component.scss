@@ -94,7 +94,7 @@ form {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 0.8rem 1rem 0.8rem 2.8rem;
+    padding: 0.8rem 3.5rem 0.8rem 2.8rem;
     color: white;
     font-size: 0.95rem;
     transition: all 0.2s;
@@ -104,6 +104,26 @@ form {
       border-color: var(--color-primary);
       background: rgba(255, 75, 75, 0.05);
       box-shadow: 0 0 0 4px rgba(255, 75, 75, 0.1);
+    }
+  }
+
+  .btn-toggle-pass {
+    position: absolute;
+    right: 0.8rem;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+
+    &:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
     }
   }
 }

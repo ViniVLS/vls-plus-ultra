@@ -14,6 +14,7 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   email = '';
   password = '';
+  showPassword = false;
   error = '';
   loading = false;
 
