@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { DatabaseService } from '../services/database.service';
 
 export interface EqualizerBand {
   frequency: number;
@@ -65,7 +66,7 @@ export class EqualizerService {
   ];
 
   isInitialized() { return this.initialized(); }
-  isBypassed() { return this.bypassed(); }
+  isBypassed() { return this.bypassed(); }  constructor(private db: DatabaseService) {}
 
   activateWithAudio(audioElement: HTMLAudioElement, providedContext?: AudioContext) {
     if (this.initialized()) return;
@@ -74,8 +75,6 @@ export class EqualizerService {
     try {
       this.audioContext = providedContext || new AudioContext();
       
-      // Criar o sourceNode se ainda não existir
-      // Nota: MediaElementAudioSourceNode é um singleton por elemento de áudio no contexto
       if (!this.sourceNode) {
         this.sourceNode = this.audioContext.createMediaElementSource(audioElement);
       }
@@ -89,7 +88,6 @@ export class EqualizerService {
       this.loadFromStorage();
     } catch (e) { 
       console.error('Equalizer initialization failed:', e);
-      // Fallback: se o sourceNode já existir, podemos tentar reconstruir a cadeia
       if (this.sourceNode) {
         this.createFilterChain();
         this.initialized.set(true);
@@ -101,13 +99,11 @@ export class EqualizerService {
     if (!this.audioContext || !this.sourceNode) return;
     const ctx = this.audioContext;
     
-    // Sempre desconectar o source antes de reconstruir a cadeia para evitar loops ou conexões duplas
     this.sourceNode.disconnect();
 
     this.filterNodes = [];
     let prev: AudioNode = this.sourceNode;
 
-    // 1. Criar e conectar as 10 bandas
     const currentBands = this.bands();
     for (let i = 0; i < 10; i++) {
       const config = currentBands[i];
@@ -122,7 +118,6 @@ export class EqualizerService {
       prev = filter;
     }
 
-    // 2. Compressor (para evitar clipping)
     this.compressorNode = ctx.createDynamicsCompressor();
     const compConfig = this.effects().compressor;
     this.compressorNode.threshold.value = compConfig.threshold;
@@ -133,23 +128,19 @@ export class EqualizerService {
     prev.connect(this.compressorNode);
     prev = this.compressorNode;
 
-    // 3. Bass Boost (Gain Node)
     this.bassBoostNode = ctx.createGain();
     this.setBassBoost(this.effects().bassBoost);
     
     prev.connect(this.bassBoostNode);
     prev = this.bassBoostNode;
 
-    // 4. Analyser (para visualização)
     this.analyserNode = ctx.createAnalyser();
     this.analyserNode.fftSize = 256;
     
     prev.connect(this.analyserNode);
     prev = this.analyserNode;
 
-    // 5. Destino Final
     if (this.bypassed()) {
-      // Se estiver em bypass, conectamos o source direto ao destino
       this.sourceNode.disconnect();
       this.sourceNode.connect(ctx.destination);
     } else {
@@ -159,7 +150,6 @@ export class EqualizerService {
 
   setBandGain(index: number, gain: number) {
     if (index >= 0 && index < this.filterNodes.length) {
-      // Usar linearRamp para mudanças suaves e evitar estalos
       const now = this.audioContext?.currentTime || 0;
       this.filterNodes[index].gain.setTargetAtTime(gain, now, 0.05);
       
@@ -181,7 +171,6 @@ export class EqualizerService {
   setBassBoost(level: number) {
     if (this.bassBoostNode) {
       const now = this.audioContext?.currentTime || 0;
-      // Ganho adicional de até 6dB (fator 2)
       const gainValue = 1 + (level / 6) * 1; 
       this.bassBoostNode.gain.setTargetAtTime(gainValue, now, 0.1);
     }
@@ -238,7 +227,6 @@ export class EqualizerService {
     filter.Q.value = q;
     filter.gain.value = gain;
 
-    // Conectar à cadeia existente (entre o último filtro e o compressor)
     if (this.filterNodes.length > 0) {
       const lastFilter = this.filterNodes[this.filterNodes.length - 1];
       lastFilter.disconnect();
@@ -260,19 +248,20 @@ export class EqualizerService {
     this.setBassBoost(0); 
   }
 
-  private saveToStorage() {
-    localStorage.setItem('vls_equalizer_state', JSON.stringify({ 
+  private async saveToStorage() {
+    const state = { 
       bands: this.bands(), 
       effects: this.effects(), 
       preset: this.currentPreset() 
-    }));
+    };
+    await this.db.set('settings', { key: 'equalizer_state', data: state });
   }
 
-  private loadFromStorage() {
+  private async loadFromStorage() {
     try {
-      const s = localStorage.getItem('vls_equalizer_state');
-      if (s) {
-        const st = JSON.parse(s);
+      const s = await this.db.get('settings', 'equalizer_state');
+      if (s?.data) {
+        const st = s.data;
         if (st.bands) { 
           this.bands.set(st.bands); 
           st.bands.forEach((b: EqualizerBand, i: number) => { 
@@ -287,15 +276,12 @@ export class EqualizerService {
 
   turnOff() {
     this.initialized.set(false);
-    
-    // Desconectar tudo
     this.sourceNode?.disconnect();
     this.filterNodes.forEach(n => n.disconnect());
     this.compressorNode?.disconnect();
     this.bassBoostNode?.disconnect();
     this.analyserNode?.disconnect();
     
-    // Reconectar o source diretamente à saída para manter o áudio tocando sem EQ
     if (this.sourceNode && this.audioContext) {
       this.sourceNode.connect(this.audioContext.destination);
     }

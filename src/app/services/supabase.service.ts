@@ -92,6 +92,17 @@ export class SupabaseService {
         if (favError) console.warn('Falha ao gravar favoritos na nuvem:', favError.message);
       }
 
+      // 3. Sincronizar Equalizador (No perfil do usuário)
+      const localEq = await this.db.get('settings', 'equalizer_state');
+      if (localEq?.data) {
+        const { error: eqError } = await this.client
+          .from('profiles')
+          .update({ equalizer_settings: localEq.data })
+          .eq('id', userId);
+        
+        if (eqError) console.warn('Falha ao sincronizar equalizador:', eqError.message);
+      }
+
       console.log('✅ Ciclo de sincronia finalizado com sucesso.');
     } catch (e) {
       console.error('❌ Erro crítico no motor de sincronia:', e);

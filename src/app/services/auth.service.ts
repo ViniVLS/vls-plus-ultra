@@ -79,6 +79,12 @@ export class AuthService {
         
         this.currentUser.set(user);
         await this.db.set('settings', { key: 'current_session', data: user });
+
+        // Restaurar Equalizador do Perfil (se existir)
+        if (profile.equalizer_settings) {
+          await this.db.set('settings', { key: 'equalizer_state', data: profile.equalizer_settings });
+          console.log('🎧 Equalizador restaurado da nuvem.');
+        }
       }
     } catch (e) {
       // Falha silenciosa: mantém os dados que já temos no sinal (offline)
