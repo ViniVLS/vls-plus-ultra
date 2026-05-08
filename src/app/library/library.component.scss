@@ -1,92 +1,110 @@
 .library-container {
   padding: 16px;
-  min-height: 100%;
+  min-height: 100vh;
+  padding-bottom: 150px; // Espaço extra para não bater no player bar
 }
 
 .library-header {
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 24px;
 
   h2 {
     margin: 0 0 16px 0;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    font-family: var(--font-pixel);
+    letter-spacing: 2px;
     color: #fff;
   }
 
   .header-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 10px;
   }
 }
 
 .btn-action-premium {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
   }
 
   .btn-icon {
-    font-size: 14px;
+    font-size: 16px;
   }
 }
 
 .section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 
   h3 {
-    margin: 0 0 12px 0;
+    margin: 0 0 16px 0;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    padding-left: 4px;
   }
 }
 
 .track-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .track-card {
   display: flex;
   align-items: center;
-  padding: 12px;
-  border-radius: 12px;
+  padding: 14px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  background: rgba(255, 255, 255, 0.03);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
   }
 
   &.active {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 45, 85, 0.1);
+    border: 1px solid rgba(255, 45, 85, 0.2);
+    
+    .track-art {
+      background: #ff2d55;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(255, 45, 85, 0.3);
+    }
   }
 
   .track-art {
-    width: 48px;
-    height: 48px;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255, 255, 255, 0.6);
-    margin-right: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-right: 14px;
+    flex-shrink: 0;
   }
 
   .track-info {
@@ -95,7 +113,8 @@
 
     .track-name {
       margin: 0;
-      font-size: 14px;
+      font-size: 0.95rem;
+      font-weight: 600;
       color: #fff;
       white-space: nowrap;
       overflow: hidden;
@@ -104,119 +123,197 @@
 
     .track-meta {
       margin: 4px 0 0 0;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
   }
 
   .track-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    margin-left: 8px;
 
     .favorite-btn {
-      padding: 6px;
+      padding: 8px;
       border: none;
       border-radius: 50%;
       background: transparent;
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.3);
       cursor: pointer;
       transition: all 0.2s;
 
       &:hover {
-        color: #ff6b6b;
+        color: #ff2d55;
+        background: rgba(255, 45, 85, 0.1);
       }
 
       &.favorited {
-        color: #ff6b6b;
+        color: #ff2d55;
       }
     }
 
     .track-duration {
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
+      color: rgba(255, 255, 255, 0.4);
+      font-variant-numeric: tabular-nums;
     }
   }
 }
 
 .playlists-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
 }
 
 .playlist-card {
-  padding: 16px;
-  border-radius: 12px;
+  padding: 20px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.03);
+
+  &:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
 
   .card-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+    font-size: 40px;
+    margin-bottom: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
   }
 
   .card-info {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
 
     h4 {
-      margin: 0;
-      font-size: 14px;
+      margin: 0 0 6px 0;
+      font-size: 1.1rem;
+      font-weight: 700;
       color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     span {
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.5);
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
   }
 
   .card-actions {
     display: flex;
     gap: 8px;
+    margin-top: auto;
 
-    .btn-text {
-      padding: 6px 12px;
+    .btn-playlist-load {
+      flex: 1;
+      padding: 12px;
       border: none;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      background: #ff2d55;
       color: #fff;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(255, 45, 85, 0.2);
+
+      &:hover {
+        background: #ff4b6b;
+        transform: translateY(-2px);
+      }
+    }
+
+    .btn-playlist-delete {
+      width: 45px;
+      height: 45px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255, 59, 48, 0.1);
+      color: #ff3b30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       transition: all 0.2s;
 
       &:hover {
-        background: rgba(255, 255, 255, 0.2);
-      }
-
-      &.delete {
-        color: #ff6b6b;
-
-        &:hover {
-          background: rgba(255, 107, 107, 0.2);
-        }
+        background: rgba(255, 59, 48, 0.2);
+        color: #ff453a;
       }
     }
   }
 }
 
 .empty-state {
-  padding: 32px;
-  border-radius: 12px;
+  padding: 48px 24px;
+  border-radius: 20px;
   text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
 
   .icon {
-    font-size: 48px;
-    margin-bottom: 16px;
+    font-size: 60px;
+    margin-bottom: 20px;
+    opacity: 0.5;
   }
 
   h3 {
-    margin: 0 0 8px 0;
+    margin: 0 0 10px 0;
     color: #fff;
-    font-size: 16px;
+    font-size: 18px;
+    font-weight: 700;
   }
 
   p {
     margin: 0;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.4);
     font-size: 14px;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 600px) {
+  .playlists-grid {
+    grid-template-columns: 1fr 1fr; // Duas colunas no mobile
+    gap: 12px;
+  }
+
+  .playlist-card {
+    padding: 16px;
+    
+    .card-icon {
+      width: 50px;
+      height: 50px;
+      font-size: 30px;
+    }
+
+    .card-info h4 {
+      font-size: 0.95rem;
+    }
+  }
+
+  .library-header {
+    h2 {
+      font-size: 1.2rem;
+    }
   }
 }

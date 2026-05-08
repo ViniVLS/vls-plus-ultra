@@ -1,7 +1,7 @@
 <div class="library-container">
   <!-- Header com ações -->
   <div class="library-header glassmorphism">
-    <h2>BIBLIOTECA</h2>
+    <h2 class="pixel-title">BIBLIOTECA</h2>
     <div class="header-actions">
       <button class="btn-action-premium" (click)="saveAsPlaylist()" *ngIf="audioService.currentTracks().length > 3">
         <span class="btn-icon">💾</span> Salvar Playlist
@@ -19,7 +19,7 @@
 
   <!-- Lista de Músicas -->
   <div class="section tracks-section">
-    <h3>MÚSICAS ({{ audioService.currentTracks().length }})</h3>
+    <h3 class="section-title">MÚSICAS ({{ audioService.currentTracks().length }})</h3>
     <div class="track-list" *ngIf="audioService.currentTracks().length > 0">
       <div class="track-card glassmorphism touch-target" *ngFor="let track of audioService.currentTracks(); let i = index"
            [class.active]="i === audioService.currentTrackIndex()"
@@ -52,17 +52,19 @@
 
   <!-- Playlists Salvas -->
   <div class="section playlists-section">
-    <h3>PLAYLISTS ({{ playlistsSalvas.length }})</h3>
+    <h3 class="section-title">PLAYLISTS ({{ playlistsSalvas.length }})</h3>
     <div class="playlists-grid" *ngIf="playlistsSalvas.length > 0">
       <div class="playlist-card glassmorphism" *ngFor="let p of playlistsSalvas; let i = index">
         <div class="card-icon">🎵</div>
         <div class="card-info">
-          <h4>{{ p.nome }}</h4>
-          <span>{{ p.musicas?.length || 0 }} Faixas</span>
+          <h4 class="playlist-name">{{ p.nome }}</h4>
+          <span class="playlist-count">{{ p.musicas?.length || 0 }} Faixas</span>
         </div>
         <div class="card-actions">
-          <button class="btn-text" (click)="loadPlaylist(p)">Carregar</button>
-          <button class="btn-text delete" (click)="excluirPlaylist(i)">Excluir</button>
+          <button class="btn-playlist-load" (click)="loadPlaylist(p)">Carregar</button>
+          <button class="btn-playlist-delete" (click)="excluirPlaylist(p)">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
         </div>
       </div>
     </div>
