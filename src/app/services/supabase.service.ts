@@ -51,28 +51,37 @@ export class SupabaseService {
   }
 
   async syncWithCloud() {
-    const { data: { session } } = await this.client.auth.getSession();
-    if (!session?.user || !this.isOnline()) return;
+    // Tenta recuperar a sessão atual do Supabase de forma agressiva
+    const { data: { session }, error: sessionError } = await this.client.auth.getSession();
+    
+    if (sessionError || !session?.user) {
+      console.log('☁️ Sem sessão ativa no Supabase para sincronia.');
+      return;
+    }
+
+    if (!this.isOnline()) return;
 
     const userId = session.user.id;
-    console.log('📡 Sincronizando dados para o usuário:', userId);
+    console.log('📡 Iniciando envio para Supabase (User:', userId + ')');
 
     try {
-      // 1. Sincronizar Playlists (Upsert genérico)
+      // 1. Sincronizar Playlists
       const localPlaylists = await this.db.getAll('playlists');
-      for (const pl of localPlaylists) {
-        const { error } = await this.client.from('playlists').upsert({
-          user_id: userId,
-          name: pl.nome || pl.name,
-          tracks: pl.musicas || pl.tracks
-        });
-        
-        if (error) console.warn('Aviso de sincronia (Playlist):', error.message);
+      if (localPlaylists.length > 0) {
+        for (const pl of localPlaylists) {
+          const { error } = await this.client.from('playlists').upsert({
+            user_id: userId,
+            name: pl.nome || pl.name,
+            tracks: pl.musicas || pl.tracks
+          });
+          
+          if (error) console.warn('Falha ao gravar playlist na nuvem:', error.message);
+        }
       }
 
-      // 2. Sincronizar Favoritos (Apenas se a tabela existir)
+      // 2. Sincronizar Favoritos
       const localFavs = await this.db.get('settings', 'favorites');
-      if (localFavs?.data && Array.isArray(localFavs.data)) {
+      if (localFavs?.data && Array.isArray(localFavs.data) && localFavs.data.length > 0) {
         const favsToSync = localFavs.data.map((f: any) => ({
           user_id: userId,
           track_name: f.name,
@@ -80,12 +89,12 @@ export class SupabaseService {
         }));
         
         const { error: favError } = await this.client.from('favorites').upsert(favsToSync);
-        if (favError) console.warn('Aviso de sincronia (Favoritos):', favError.message);
+        if (favError) console.warn('Falha ao gravar favoritos na nuvem:', favError.message);
       }
 
-      console.log('✅ Tentativa de sincronia finalizada.');
+      console.log('✅ Ciclo de sincronia finalizado com sucesso.');
     } catch (e) {
-      console.error('❌ Erro inesperado na sincronia:', e);
+      console.error('❌ Erro crítico no motor de sincronia:', e);
     }
   }
 
@@ -96,11 +105,15 @@ export class SupabaseService {
     
     const { data: { session } } = await this.client.auth.getSession();
     if (session?.user) {
-      await this.client.from('playlists').upsert({
+      const { error } = await this.client.from('playlists').upsert({
         user_id: session.user.id,
         name: name,
         tracks: tracks
       });
+      if (error) console.error('Erro ao salvar playlist no Supabase:', error.message);
+      else console.log('✅ Playlist salva na nuvem.');
+    } else {
+      console.warn('⚠️ Playlist salva apenas LOCAL (sem sessão Supabase).');
     }
     return playlist;
   }

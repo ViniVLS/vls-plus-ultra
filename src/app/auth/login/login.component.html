@@ -33,7 +33,7 @@
           <span class="checkmark"></span>
           Lembrar-me
         </label>
-        <a href="#" class="forgot-pass" (click)="$event.preventDefault(); onForgotPassword()">Esqueci a senha</a>
+        <button type="button" class="btn-forgot" (click)="onForgotPassword()">Esqueci a senha</button>
       </div>
 
       <div class="error-msg" *ngIf="error">{{ error }}</div>
