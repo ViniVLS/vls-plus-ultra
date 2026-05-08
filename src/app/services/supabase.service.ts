@@ -58,33 +58,34 @@ export class SupabaseService {
     console.log('📡 Sincronizando dados para o usuário:', userId);
 
     try {
-      // 1. Sincronizar Playlists (Upsert baseado no nome para evitar duplicatas)
+      // 1. Sincronizar Playlists (Upsert genérico)
       const localPlaylists = await this.db.getAll('playlists');
       for (const pl of localPlaylists) {
         const { error } = await this.client.from('playlists').upsert({
           user_id: userId,
           name: pl.nome || pl.name,
           tracks: pl.musicas || pl.tracks
-        }, { onConflict: 'user_id, name' }); // Requer restrição unique no DB
+        });
         
-        if (error) console.warn('Erro ao sincronizar playlist:', pl.nome, error.message);
+        if (error) console.warn('Aviso de sincronia (Playlist):', error.message);
       }
 
-      // 2. Sincronizar Favoritos
+      // 2. Sincronizar Favoritos (Apenas se a tabela existir)
       const localFavs = await this.db.get('settings', 'favorites');
       if (localFavs?.data && Array.isArray(localFavs.data)) {
-        for (const fav of localFavs.data) {
-          await this.client.from('favorites').upsert({
-            user_id: userId,
-            track_name: fav.name,
-            track_metadata: fav
-          }, { onConflict: 'user_id, track_name' });
-        }
+        const favsToSync = localFavs.data.map(f => ({
+          user_id: userId,
+          track_name: f.name,
+          track_metadata: f
+        }));
+        
+        const { error: favError } = await this.client.from('favorites').upsert(favsToSync);
+        if (favError) console.warn('Aviso de sincronia (Favoritos):', favError.message);
       }
 
-      console.log('✅ Sincronia de segundo plano finalizada.');
+      console.log('✅ Tentativa de sincronia finalizada.');
     } catch (e) {
-      console.error('❌ Erro na sincronia:', e);
+      console.error('❌ Erro inesperado na sincronia:', e);
     }
   }
 
