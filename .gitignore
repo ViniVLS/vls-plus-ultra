@@ -38,7 +38,7 @@ testem.log
 /typings
 
 # Capacitor
-/android
+
 /ios
 /www
 
