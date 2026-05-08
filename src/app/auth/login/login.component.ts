@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { DialogService } from '../../services/dialog.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-login',
@@ -19,7 +21,11 @@ export class LoginComponent {
   error = '';
   loading = false;
 
-  constructor(private authService: AuthService) {
+  constructor(
+    private authService: AuthService,
+    private dialog: DialogService,
+    private toast: ToastService
+  ) {
     this.checkRememberedEmail();
   }
 
@@ -54,6 +60,26 @@ export class LoginComponent {
       this.error = err.message || 'Erro ao realizar login.';
     } finally {
       this.loading = false;
+    }
+  }
+
+  async onForgotPassword() {
+    const email = await this.dialog.prompt(
+      'Recuperar Senha',
+      'Digite seu e-mail cadastrado para receber o link de recuperação:',
+      this.email
+    );
+
+    if (email) {
+      this.loading = true;
+      try {
+        await this.authService.resetPassword(email);
+        this.toast.success('E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+      } catch (err: any) {
+        this.toast.error('Erro ao enviar e-mail: ' + (err.message || 'Tente novamente.'));
+      } finally {
+        this.loading = false;
+      }
     }
   }
 }

@@ -208,4 +208,12 @@ export class AuthService {
     this.router.navigate(['/login']);
     window.dispatchEvent(new CustomEvent('vls-logout'));
   }
+
+  async resetPassword(email: string) {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/login'
+    });
+    if (error) throw error;
+    return true;
+  }
 }
