@@ -16,10 +16,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            storeFile file('vls-plus-release.jks')
+            storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD") ?: "VlsPlus2026"
+            keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "vls-plus-key"
+            keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: "VlsPlus2026"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
+            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            signingConfig signingConfigs.release
         }
     }
 }

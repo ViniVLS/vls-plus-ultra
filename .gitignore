@@ -38,9 +38,10 @@ testem.log
 /typings
 
 # Capacitor
-
 /ios
 /www
+android/app/*.jks
+android/app/*.base64
 
 # Environments
 src/environments/environment.prod.ts
