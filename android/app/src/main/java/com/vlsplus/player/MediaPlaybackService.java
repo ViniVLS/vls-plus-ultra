@@ -29,7 +29,7 @@ import androidx.media.app.NotificationCompat.MediaStyle;
 public class MediaPlaybackService extends Service {
 
     private static final String TAG = "MediaPlaybackService";
-    private static final String CHANNEL_ID = "vls_plus_media_channel";
+    private static final String CHANNEL_ID = "vls_plus_media_channel_v2";
     private static final int NOTIFICATION_ID = 1001;
 
     public static final String ACTION_PLAY = "com.vlsplus.player.ACTION_PLAY";
@@ -81,7 +81,7 @@ public class MediaPlaybackService extends Service {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "VLS PLUS Player",
-                NotificationManager.IMPORTANCE_LOW // Low so it doesn't make sound
+                NotificationManager.IMPORTANCE_DEFAULT // Elevado para garantir tela de bloqueio
             );
             channel.setDescription("Controles de reprodução de música");
             channel.setShowBadge(false);
@@ -303,12 +303,13 @@ public class MediaPlaybackService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(currentTitle != null ? currentTitle : "VLS PLUS")
             .setContentText(currentArtist != null ? currentArtist : "")
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(openAppPendingIntent)
             .setDeleteIntent(stopIntent)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(isPlaying)
             .setShowWhen(false)
+            .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         if (currentArt != null) {

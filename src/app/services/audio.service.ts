@@ -3,6 +3,7 @@ import { SupabaseService } from './supabase.service';
 import { EqualizerService } from '../equalizer/equalizer.service';
 import { AuthService } from './auth.service';
 import { MediaControlsService } from './media-controls.service';
+import { DatabaseService } from './database.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,7 @@ export class AudioService {
   public isEqualizerActive: boolean = false;
   
   currentTracks = signal<any[]>([]); 
+  recentTracks = signal<any[]>([]);
   currentTrackIndex = signal<number>(0);
   currentTrackArt = signal<string | null>(null);
   isPlaying = signal<boolean>(false);
@@ -23,7 +25,8 @@ export class AudioService {
     private supabase: SupabaseService,
     private authService: AuthService,
     private equalizer: EqualizerService,
-    private mediaControls: MediaControlsService
+    private mediaControls: MediaControlsService,
+    private db: DatabaseService
   ) {
     this.audio.ontimeupdate = () => {
       this.currentTime.set(this.audio.currentTime);
@@ -57,6 +60,39 @@ export class AudioService {
 
     // Setup media notification button handlers
     this.setupMediaControls();
+    this.loadRecentTracks();
+  }
+
+  private async loadRecentTracks() {
+    const data = await this.db.get('settings', 'recent_tracks');
+    if (data && data.data) {
+      this.recentTracks.set(data.data);
+    }
+  }
+
+  private async addToRecentTracks(track: any) {
+    if (!track) return;
+    const currentList = [...this.recentTracks()];
+    // Check by name and duration to avoid duplicates
+    const existingIdx = currentList.findIndex(t => t.name === track.name);
+    if (existingIdx !== -1) {
+      currentList.splice(existingIdx, 1);
+    }
+    
+    // Save only metadata, not the File object
+    const trackMeta = {
+      name: track.name,
+      artist: track.artist || this.extractArtist(track),
+      duration: track.duration,
+      size: track.size,
+      playedAt: Date.now()
+    };
+    
+    currentList.unshift(trackMeta);
+    if (currentList.length > 50) currentList.pop();
+    
+    this.recentTracks.set(currentList);
+    await this.db.set('settings', { key: 'recent_tracks', data: currentList });
   }
 
   /**
@@ -209,6 +245,7 @@ export class AudioService {
       this.audio.src = URL.createObjectURL(trackObj.file);
       this.audio.load();
       this.extractMetadata(trackObj.file);
+      this.addToRecentTracks(trackObj);
     }
   }
 
