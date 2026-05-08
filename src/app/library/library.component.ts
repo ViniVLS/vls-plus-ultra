@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 import { AudioService } from '../services/audio.service';
 import { SupabaseService } from '../services/supabase.service';
 import { ToastService } from '../services/toast.service';
+import { DialogService } from '../services/dialog.service';
 
 @Component({
   selector: 'app-library',
@@ -23,7 +24,8 @@ export class LibraryComponent implements OnInit {
   constructor(
     public audioService: AudioService,
     private supabase: SupabaseService,
-    private toast: ToastService
+    private toast: ToastService,
+    private dialog: DialogService
   ) {}
 
   async ngOnInit() {
@@ -116,7 +118,7 @@ export class LibraryComponent implements OnInit {
     const tracks = this.audioService.currentTracks();
     if (tracks.length === 0) return;
     
-    const name = prompt('Nome da Playlist:', 'Minha Playlist');
+    const name = await this.dialog.prompt('Nova Playlist', 'Como deseja chamar esta playlist?', 'Minha Playlist');
     if (name) {
       this.loading = true;
       try {
@@ -148,7 +150,12 @@ export class LibraryComponent implements OnInit {
   }
 
   async excluirPlaylist(playlist: any) {
-    if (confirm('Deseja excluir esta playlist definitivamente?')) {
+    const confirmed = await this.dialog.confirm(
+      'Excluir Playlist', 
+      `Deseja realmente excluir a playlist "${playlist.nome || playlist.name}"? Esta ação não pode ser desfeita.`
+    );
+
+    if (confirmed) {
       this.loading = true;
       try {
         this.playlistsSalvas = this.playlistsSalvas.filter(p => p !== playlist);

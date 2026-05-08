@@ -5,11 +5,12 @@ import { AudioService } from '../services/audio.service';
 import { AuthService } from '../services/auth.service';
 import { SyncService } from '../services/sync.service';
 import { ToastComponent } from '../components/toast/toast.component';
+import { DialogComponent } from '../components/dialog/dialog.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [CommonModule, RouterModule, ToastComponent],
+  imports: [CommonModule, RouterModule, ToastComponent, DialogComponent],
   templateUrl: './app-layout.component.html',
   styleUrls: ['./app-layout.component.scss']
 })
