@@ -17,7 +17,7 @@ export class VlsFilesystemService {
       try {
         await Filesystem.mkdir({
           path: this.ROOT_DIR,
-          directory: Directory.Documents,
+          directory: Directory.Data,
           recursive: true
         });
         console.log('VLSPLUS_TEMP directory created/verified');
@@ -36,7 +36,7 @@ export class VlsFilesystemService {
     await Filesystem.writeFile({
       path: `${this.ROOT_DIR}/${path}`,
       data: data,
-      directory: Directory.Documents,
+      directory: Directory.Data,
       encoding: Encoding.UTF8
     });
   }
@@ -49,7 +49,7 @@ export class VlsFilesystemService {
     try {
       const contents = await Filesystem.readFile({
         path: `${this.ROOT_DIR}/${path}`,
-        directory: Directory.Documents,
+        directory: Directory.Data,
         encoding: Encoding.UTF8
       });
       return contents.data as string;
@@ -63,7 +63,7 @@ export class VlsFilesystemService {
     
     const result = await Filesystem.readdir({
       path: this.ROOT_DIR,
-      directory: Directory.Documents
+      directory: Directory.Data
     });
     return result.files;
   }
