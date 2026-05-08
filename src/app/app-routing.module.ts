@@ -8,6 +8,7 @@ import { BrowseComponent } from './browse/browse.component';
 import { LibraryComponent } from './library/library.component';
 import { EqualizerComponent } from './equalizer/equalizer.component';
 
+import { LoginComponent } from './auth/login/login.component';
 import { ResetPasswordComponent } from './auth/reset-password/reset-password.component';
 import { authGuard } from './auth.guard';
 
