@@ -27,6 +27,15 @@
         </div>
       </div>
 
+      <div class="auth-options">
+        <label class="remember-me">
+          <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe">
+          <span class="checkmark"></span>
+          Lembrar-me
+        </label>
+        <a href="#" class="forgot-pass" (click)="$event.preventDefault()">Esqueci a senha</a>
+      </div>
+
       <div class="error-msg" *ngIf="error">{{ error }}</div>
 
       <button type="submit" class="btn-primary" [disabled]="loading">

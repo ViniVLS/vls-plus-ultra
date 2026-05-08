@@ -128,6 +128,68 @@ form {
   }
 }
 
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+
+  .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+
+    &:hover {
+      color: white;
+    }
+
+    input {
+      display: none;
+    }
+
+    .checkmark {
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      display: inline-block;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    input:checked + .checkmark {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      
+      &::after {
+        content: "✓";
+        position: absolute;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
+
+  .forgot-pass {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 .btn-primary {
   background: var(--color-primary);
   color: white;
