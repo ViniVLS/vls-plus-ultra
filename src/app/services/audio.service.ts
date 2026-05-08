@@ -47,7 +47,7 @@ export class AudioService {
     }, { allowSignalWrites: true });
   }
 
-  async setTracks(tracks: File[], index: number = 0) {
+  async setTracks(tracks: any[], index: number = 0) {
     const currentTracks = this.currentTracks();
     
     // Evitar recarregar se for exatamente a mesma lista

@@ -73,7 +73,7 @@ export class SupabaseService {
       // 2. Sincronizar Favoritos (Apenas se a tabela existir)
       const localFavs = await this.db.get('settings', 'favorites');
       if (localFavs?.data && Array.isArray(localFavs.data)) {
-        const favsToSync = localFavs.data.map(f => ({
+        const favsToSync = localFavs.data.map((f: any) => ({
           user_id: userId,
           track_name: f.name,
           track_metadata: f
@@ -131,6 +131,18 @@ export class SupabaseService {
       }));
       await this.client.from('favorites').upsert(favsToSync);
     }
+  }
+
+  async excluirPlaylist(playlist: any) {
+    const { data: { session } } = await this.client.auth.getSession();
+    if (session?.user) {
+      await this.client.from('playlists')
+        .delete()
+        .eq('user_id', session.user.id)
+        .eq('name', playlist.nome || playlist.name);
+    }
+    // Remove do banco local também
+    await this.db.delete('playlists', playlist.id_local);
   }
 
   async getFavorites() {

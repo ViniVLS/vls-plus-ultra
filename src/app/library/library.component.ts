@@ -158,8 +158,11 @@ export class LibraryComponent implements OnInit {
     if (confirmed) {
       this.loading = true;
       try {
-        this.playlistsSalvas = this.playlistsSalvas.filter(p => p !== playlist);
+        await this.supabase.excluirPlaylist(playlist);
+        await this.loadPlaylists();
         this.toast.success('Playlist removida.');
+      } catch (e) {
+        this.toast.error('Erro ao excluir playlist.');
       } finally {
         this.loading = false;
       }
