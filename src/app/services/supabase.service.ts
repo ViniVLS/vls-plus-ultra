@@ -16,30 +16,11 @@ export class SupabaseService {
       environment.supabase.url,
       environment.supabase.key
     );
-    this.initAuth();
     window.addEventListener('online', () => this.handleOnlineStatus(true));
     window.addEventListener('offline', () => this.handleOnlineStatus(false));
   }
 
-  private async initAuth() {
-    const localUser = await this.db.get('settings', 'current_user');
-    if (localUser) {
-      this.currentUser.set(localUser.data);
-    }
-    
-    // Tentar refrescar com supabase se online
-    if (this.isOnline()) {
-      try {
-        const { data: { user } } = await this.client.auth.getUser();
-        if (user) {
-          await this.db.set('settings', { key: 'current_user', data: user });
-          this.currentUser.set(user);
-        }
-      } catch (e) {
-        console.error('Supabase auth error', e);
-      }
-    }
-  }
+  // A inicialização agora é gerenciada pelo AuthService
 
   private handleOnlineStatus(status: boolean) {
     this.isOnline.set(status);

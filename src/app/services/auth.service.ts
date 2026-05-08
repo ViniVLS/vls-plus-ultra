@@ -45,14 +45,15 @@ export class AuthService {
   }
 
   private initAuthListener() {
-    this.supabase.auth.onAuthStateChange(async (event, session) => {
+    this.supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
-          await this.syncProfile(session.user);
+          // Não usar await aqui para não travar o evento
+          this.syncProfile(session.user);
         }
       } else if (event === 'SIGNED_OUT') {
         this.currentUser.set(null);
-        await this.db.delete('settings', 'current_session');
+        this.db.delete('settings', 'current_session');
       }
     });
   }
@@ -130,7 +131,7 @@ export class AuthService {
     });
 
     if (error) {
-      if (error.message.includes('Fetch')) {
+      if (error.message.includes('Fetch') || error.message.includes('Network')) {
         const users = await this.db.get('settings', 'all_users') || { key: 'all_users', data: [] };
         const foundUser = users.data.find((u: any) => u.email === email && u.password === password);
         if (foundUser) {
@@ -142,23 +143,21 @@ export class AuthService {
       throw error;
     }
 
-    const { data: profile } = await this.supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
-
+    // Criar objeto de usuário básico imediatamente para não travar a UI
     const user: User = {
       id: data.user.id,
       email: data.user.email!,
-      username: profile?.username || 'Usuário',
-      fullName: profile?.full_name,
-      cpf: profile?.cpf,
-      phone: profile?.phone,
-      address: profile?.address
+      username: 'Carregando...'
     };
 
+    // Salva sessão básica e navega logo
     await this.saveSession(user);
+
+    // Busca o perfil completo em "background"
+    this.syncProfile(data.user).then(() => {
+      console.log('Perfil sincronizado em background.');
+    });
+
     return user;
   }
 
