@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { DialogService } from '../../services/dialog.service';
 import { ToastService } from '../../services/toast.service';
+import { VERSION_DISPLAY } from '../../version';
 
 @Component({
   selector: 'app-login',
@@ -14,6 +15,7 @@ import { ToastService } from '../../services/toast.service';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
+  version = VERSION_DISPLAY;
   email = '';
   password = '';
   showPassword = false;

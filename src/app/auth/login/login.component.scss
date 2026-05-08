@@ -248,6 +248,16 @@ form {
   }
 }
 
+.version-label {
+  text-align: center;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.15);
+  margin-top: 1rem;
+  font-family: monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
 /* Background Animated Blobs */
 .bg-blobs {
   position: absolute;
