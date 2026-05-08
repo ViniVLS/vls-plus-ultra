@@ -1,0 +1,127 @@
+<div class="equalizer-container">
+  <div class="eq-header glassmorphism">
+    <h2>🎛️ EQUALIZADOR</h2>
+    <button 
+      class="bypass-btn" 
+      [class.active]="isBypassed()"
+      (click)="toggleBypass()">
+      {{ isBypassed() ? 'OFF' : 'ON' }}
+    </button>
+  </div>
+
+  <div class="eq-content" [class.bypassed]="isBypassed()">
+    <div class="eq-bands glassmorphism">
+      <div class="bands-grid">
+        <div class="band-column" *ngFor="let band of bands; let i = index">
+          <div class="slider-vertical">
+            <input 
+              type="range" 
+              min="-12" 
+              max="12" 
+              step="0.5"
+              [value]="band.gain"
+              (input)="onBandChange(i, $event)"
+              class="vertical-slider">
+            <div class="slider-fill" [style.height]="((band.gain + 12) / 24 * 100) + '%'"></div>
+          </div>
+          <span class="band-value">{{ band.gain > 0 ? '+' : '' }}{{ band.gain }}</span>
+          <span class="band-freq">{{ getFrequencyLabel(band.frequency) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="presets-section glassmorphism">
+      <h3>PRESETS</h3>
+      <div class="presets-grid">
+        <button 
+          *ngFor="let preset of presets" 
+          class="preset-btn"
+          [class.active]="currentPreset === preset.name"
+          (click)="onPresetSelect(preset.name)">
+          {{ preset.name }}
+        </button>
+      </div>
+    </div>
+
+    <div class="effects-section glassmorphism">
+      <h3>EFEITOS</h3>
+      
+      <div class="effect-row">
+        <label>🔊 Bass Boost</label>
+        <div class="slider-row">
+          <input 
+            type="range" 
+            min="0" 
+            max="6" 
+            step="0.5"
+            [value]="effects.bassBoost"
+            (input)="onBassBoostChange($event)">
+          <span>{{ effects.bassBoost }}dB</span>
+        </div>
+      </div>
+
+      <div class="effect-row">
+        <label>🎵 Reverb</label>
+        <div class="slider-row">
+          <input 
+            type="range" 
+            min="0" 
+            max="100" 
+            step="1"
+            [value]="effects.reverb"
+            (input)="onReverbChange($event)">
+          <span>{{ effects.reverb }}%</span>
+        </div>
+      </div>
+
+      <div class="effect-row">
+        <label>🔮 Virtualizer</label>
+        <div class="slider-row">
+          <input 
+            type="range" 
+            min="0" 
+            max="100" 
+            step="1"
+            [value]="effects.virtualizer"
+            (input)="onVirtualizerChange($event)">
+          <span>{{ effects.virtualizer }}%</span>
+        </div>
+      </div>
+
+      <div class="effect-row toggle-row">
+        <label>⚡ Loudness</label>
+        <label class="switch">
+          <input 
+            type="checkbox"
+            [checked]="effects.loudness"
+            (change)="onLoudnessChange($event)">
+          <span class="slider-toggle"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="custom-section glassmorphism">
+      <h3>🎚️ CUSTOM</h3>
+      
+      <div class="custom-inputs">
+        <div class="input-group">
+          <label>Freq (Hz)</label>
+          <input type="number" [(ngModel)]="customBandfreq" min="20" max="20000">
+        </div>
+        <div class="input-group">
+          <label>Q</label>
+          <input type="number" [(ngModel)]="customBandQ" min="0.1" max="10" step="0.1">
+        </div>
+        <div class="input-group">
+          <label>Gain</label>
+          <input type="number" [(ngModel)]="customBandGain" min="-12" max="12">
+        </div>
+        <button class="add-btn" (click)="addCustomBand()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div class="actions-section">
+      <button class="reset-btn" (click)="resetToFlat()">🔄 Resetar</button>
+    </div>
+  </div>
+</div>

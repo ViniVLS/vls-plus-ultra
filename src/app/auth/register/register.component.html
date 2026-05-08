@@ -1,0 +1,58 @@
+<div class="auth-container">
+  <div class="auth-card glass">
+    <div class="brand">
+      <div class="logo-box">V+</div>
+      <h1>CRIAR CONTA</h1>
+      <p class="subtitle">FAÇA PARTE DO VLS PLUS</p>
+    </div>
+
+    <form (submit)="onRegister(); $event.preventDefault()">
+      <div class="form-group">
+        <label>Nome de Usuário</label>
+        <div class="input-wrapper">
+          <span class="icon">👤</span>
+          <input type="text" name="username" [(ngModel)]="username" placeholder="Seu nome" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>E-mail</label>
+        <div class="input-wrapper">
+          <span class="icon">📧</span>
+          <input type="email" name="email" [(ngModel)]="email" placeholder="seu@email.com" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Senha</label>
+        <div class="input-wrapper">
+          <span class="icon">🔒</span>
+          <input type="password" name="password" [(ngModel)]="password" placeholder="Mínimo 6 caracteres" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirmar Senha</label>
+        <div class="input-wrapper">
+          <span class="icon">✔️</span>
+          <input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" placeholder="Repita a senha" required>
+        </div>
+      </div>
+
+      <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'CADASTRANDO...' : 'CRIAR CONTA AGORA' }}
+      </button>
+    </form>
+
+    <div class="footer-links">
+      <p>Já tem uma conta? <a routerLink="/login">Faça Login</a></p>
+    </div>
+  </div>
+
+  <div class="bg-blobs">
+    <div class="blob red"></div>
+    <div class="blob purple"></div>
+  </div>
+</div>

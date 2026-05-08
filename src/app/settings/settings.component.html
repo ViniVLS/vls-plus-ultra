@@ -1,0 +1,136 @@
+<div class="settings-container">
+  <h2 class="pixel-title">CONFIGURAÇÕES</h2>
+
+  <!-- Auth Section (Se não logado) -->
+  <div class="card glassmorphism" *ngIf="!user">
+    <h3>{{ isLogin ? 'ENTRAR' : 'CADASTRAR' }}</h3>
+    <p class="subtitle">Entre com seus dados para sincronizar sua biblioteca</p>
+    
+    <div class="form-group">
+      <input type="email" [(ngModel)]="email" placeholder="E-MAIL" class="pixel-input">
+      <input type="password" [(ngModel)]="password" placeholder="SENHA" class="pixel-input">
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" (click)="handleAuth()" [disabled]="loading">
+        {{ loading ? 'PROCESSANDO...' : 'ENTRAR' }}
+      </button>
+      <button class="btn-text" (click)="toggleMode()">
+        {{ isLogin ? 'NÃO TEM CONTA? CADASTRE-SE' : 'JÁ TEM CONTA? ENTRE' }}
+      </button>
+    </div>
+    
+    <p class="auth-message" *ngIf="message">{{ message }}</p>
+  </div>
+
+  <!-- User Profile Section (Se logado) -->
+  <div class="card glassmorphism profile-card" *ngIf="user">
+    <div class="profile-header">
+      <div class="avatar">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+      </div>
+      <div class="info">
+        <h3 class="user-email">{{ user?.email }}</h3>
+        <span class="status">Conta Premium</span>
+      </div>
+    </div>
+
+    <div class="profile-form">
+      <h4>DADOS PESSOAIS</h4>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nome Completo</label>
+          <input type="text" [(ngModel)]="fullName" placeholder="Nome Completo" class="pixel-input">
+        </div>
+        <div class="form-group">
+          <label>CPF</label>
+          <input type="text" [(ngModel)]="cpf" placeholder="000.000.000-00" class="pixel-input">
+        </div>
+        <div class="form-group">
+          <label>Telefone</label>
+          <input type="text" [(ngModel)]="phone" placeholder="(00) 00000-0000" class="pixel-input">
+        </div>
+      </div>
+
+      <h4>ENDEREÇO</h4>
+      <div class="address-section">
+        <div class="form-row">
+          <div class="form-group cep-group">
+            <label>CEP</label>
+            <div class="cep-input-row">
+              <input type="text" [(ngModel)]="address.cep" (blur)="searchCep()" placeholder="00000-000" class="pixel-input">
+              <button class="btn-search" (click)="searchCep()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
+            </div>
+          </div>
+          <div class="form-group street-group">
+            <label>Logradouro</label>
+            <input type="text" [(ngModel)]="address.street" placeholder="Rua/Av" class="pixel-input">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group small">
+            <label>Número</label>
+            <input type="text" [(ngModel)]="address.number" placeholder="Nº" class="pixel-input">
+          </div>
+          <div class="form-group">
+            <label>Complemento</label>
+            <input type="text" [(ngModel)]="address.complement" placeholder="Apto/Bloco" class="pixel-input">
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Bairro</label>
+            <input type="text" [(ngModel)]="address.neighborhood" placeholder="Bairro" class="pixel-input">
+          </div>
+          <div class="form-group">
+            <label>Cidade</label>
+            <input type="text" [(ngModel)]="address.city" placeholder="Cidade" class="pixel-input">
+          </div>
+          <div class="form-group mini">
+            <label>UF</label>
+            <input type="text" [(ngModel)]="address.state" placeholder="UF" class="pixel-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-primary" (click)="saveProfile()" [disabled]="loading">
+          {{ loading ? 'SALVANDO...' : 'SALVAR ALTERAÇÕES' }}
+        </button>
+        <button class="btn-outline" (click)="logout()">SAIR DA CONTA</button>
+      </div>
+      
+      <p class="auth-message success" *ngIf="message">{{ message }}</p>
+    </div>
+  </div>
+
+  <!-- App Info Section -->
+  <div class="card glassmorphism info-card">
+    <div class="link-row" routerLink="/equalizer">
+      <div class="link-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+      </div>
+      <div class="link-text">
+        <span class="link-title">🎛️ Equalizador</span>
+        <span class="link-subtitle">Ajustar som e efeitos</span>
+      </div>
+      <svg class="link-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+    </div>
+  </div>
+
+  <div class="card glassmorphism info-card">
+    <h3>SISTEMA VLS PLUS</h3>
+    <div class="info-list">
+      <div class="info-row">
+        <span>Versão</span>
+        <span class="pixel-text">v1.2.0 • ULTRA</span>
+      </div>
+      <div class="info-row">
+        <span>Sincronia Online</span>
+        <span [class.active]="user" [class.inactive]="!user">{{ user ? 'Ativa' : 'Offline' }}</span>
+      </div>
+    </div>
+  </div>
+</div>

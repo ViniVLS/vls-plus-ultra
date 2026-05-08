@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "media-vplayer3",
+    "exit": "media-vplayer",
+    "appmedia3": "media-vplayer3"
+  },
+  "targets": {},
+  "etags": {}
+}

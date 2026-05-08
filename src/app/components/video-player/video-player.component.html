@@ -1,0 +1,86 @@
+<div class="video-player-container" [class.glassmorphism]="true">
+  <video #videoPlayer
+         class="video-element"
+         (loadedmetadata)="onVideoReady(videoPlayer)"
+         [class.hidden]="!videoElement"
+         poster="https://via.placeholder.com/800x450?thumbtime=1">
+    <!-- Video source would be provided by parent component or service -->
+    <!-- For demo purposes, we'll use a placeholder -->
+    <source src="https://www.w3schools.com/html/movie.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Video Controls Overlay -->
+  <div class="video-overlay" [class.hidden]="!videoElement">
+    <!-- Background dim -->
+    <div class="overlay-background"></div>
+    
+    <!-- Controls Container -->
+    <div class="video-controls">
+      <!-- Left Controls -->
+      <div class="controls-left">
+        <button class="control-btn touch-target"
+                (click)="togglePlayPause()"
+                [class.active]="mediaStore.isPlaying()">
+          {{ mediaStore.isPlaying() ? '⏸' : '▶️' }}
+        </button>
+        
+        <div class="time-display">
+          {{ formatTime(mediaStore.currentTime()) }} / {{ formatTime(mediaStore.duration()) }}
+        </div>
+      </div>
+      
+      <!-- Center Controls (Progress Bar) -->
+      <div class="controls-center">
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-filled"
+                 [style.width.%]="mediaStore.duration() > 0 ? (mediaStore.currentTime() / mediaStore.duration()) * 100 : 0">
+            </div>
+          </div>
+          <div class="progress-time">
+            <span>{{ formatTime(mediaStore.currentTime()) }}</span>
+            <span>/</span>
+            <span>{{ formatTime(mediaStore.duration()) }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Controls -->
+      <div class="controls-right">
+        <button class="control-btn touch-target"
+                (click)="setMute(!mediaStore.isMuted())"
+                [class.active]="mediaStore.isMuted()">
+          {{ mediaStore.isMuted() ? '🔇' : '🔊' }}
+        </button>
+        
+        <div class="volume-slider">
+          <input type="range"
+                 min="0"
+                 max="1"
+                 step="0.01"
+                 [value]="mediaStore.volume()"
+                 (input)="onVolumeChange($event)"
+                 class="touch-target">
+        </div>
+        
+        <button class="control-btn touch-target"
+                (click)="setPlaybackRate(mediaStore.playbackRate() === 1 ? 1.5 : 1)">
+          {{ mediaStore.playbackRate() }}x
+        </button>
+        
+        <button class="control-btn touch-target"
+                title="Picture-in-Picture"
+                (click)="videoElement?.requestPictureInPicture()">
+          🖼️
+        </button>
+        
+        <button class="control-btn touch-target"
+                title="Fullscreen"
+                (click)="toggleFullscreen()">
+          ⛶
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

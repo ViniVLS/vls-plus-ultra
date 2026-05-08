@@ -1,0 +1,99 @@
+<div class="premium-home-container">
+  <!-- Tabs de Navegação Interna -->
+  <div class="retro-tabs-container">
+    <div class="tabs-scroll">
+      <button class="tab-item" [class.active]="activeTab() === 'NOW_PLAYING'" (click)="setTab('NOW_PLAYING')">TOCANDO AGORA</button>
+      <button class="tab-item" [class.active]="activeTab() === 'UP_NEXT'" (click)="setTab('UP_NEXT')">FILA DE REPRODUÇÃO</button>
+      <button class="tab-item" [class.active]="activeTab() === 'RECENT'" (click)="setTab('RECENT')">RECENTES</button>
+    </div>
+  </div>
+
+  <div class="content-area">
+    <!-- Aba: Tocando Agora (Player Principal) -->
+    <div class="tab-content" *ngIf="activeTab() === 'NOW_PLAYING'">
+      <div class="player-section glassmorphism">
+        <div class="audio-header">
+          <span class="status-badge" [class.playing]="audioService.isPlaying()">
+            {{ audioService.isPlaying() ? '• TOCANDO AGORA' : 'PAUSADO' }}
+          </span>
+          <h3 class="now-playing-title">
+            {{ audioService.currentTracks()[audioService.currentTrackIndex()]?.name || 'Nenhuma música selecionada' }}
+          </h3>
+        </div>
+        
+        <div class="audio-visualizer">
+          <div class="art-background-blur" [style.backgroundImage]="'url(' + audioService.currentTrackArt() + ')'" *ngIf="audioService.currentTrackArt()"></div>
+          
+          <div class="album-art-container glassmorphism">
+            <img [src]="audioService.currentTrackArt()" *ngIf="audioService.currentTrackArt()" class="main-album-art">
+            <div class="album-art-placeholder" *ngIf="!audioService.currentTrackArt()">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5s2.01-4.5 4.5-4.5 4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="premium-controls">
+          <div class="progress-container">
+            <input type="range" class="progress-slider" 
+                   [value]="audioService.currentTime()" 
+                   [max]="audioService.duration()" 
+                   (input)="seek($event)">
+            <div class="time-info">
+              <span>{{ formatTime(audioService.currentTime()) }}</span>
+              <span>{{ formatTime(audioService.duration()) }}</span>
+            </div>
+          </div>
+
+          <div class="control-buttons">
+            <button class="btn-icon secondary" routerLink="/equalizer" title="Equalizador">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </button>
+            <button class="btn-icon secondary" (click)="previous()">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button class="btn-icon primary play-pause" (click)="togglePlayPause()">
+              <svg *ngIf="!audioService.isPlaying()" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              <svg *ngIf="audioService.isPlaying()" width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+            <button class="btn-icon secondary" (click)="next()">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba: Fila de Reprodução (Up Next) -->
+    <div class="tab-content" *ngIf="activeTab() === 'UP_NEXT'">
+      <div class="section-header">
+        <h3>FILA DE REPRODUÇÃO</h3>
+      </div>
+      <div class="track-list">
+        <div class="track-card glassmorphism touch-target" 
+             *ngFor="let track of audioService.currentTracks(); let i = index"
+             [class.active]="i === audioService.currentTrackIndex()"
+             (click)="selectTrack(i)">
+          <div class="track-art">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+          </div>
+          <div class="track-info">
+            <h4 class="track-name">{{ track.name }}</h4>
+            <p class="track-meta">{{ formatTime(track.duration) }} • {{ (track.size / 1048576).toFixed(1) }} MB</p>
+          </div>
+          <div class="active-indicator" *ngIf="i === audioService.currentTrackIndex()">
+            <div class="pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba: Recentes (Placeholder ou Histórico) -->
+    <div class="tab-content" *ngIf="activeTab() === 'RECENT'">
+      <div class="empty-state glassmorphism">
+        <div class="icon">🕒</div>
+        <h3>Histórico em breve</h3>
+        <p>Acompanhe suas músicas tocadas recentemente nesta seção.</p>
+      </div>
+    </div>
+  </div>
+</div>

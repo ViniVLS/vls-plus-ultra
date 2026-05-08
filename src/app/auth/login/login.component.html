@@ -1,0 +1,42 @@
+<div class="auth-container">
+  <div class="auth-card glass">
+    <div class="brand">
+      <div class="logo-box">V+</div>
+      <h1>VLS PLUS</h1>
+      <p class="subtitle">ULTRA AUDIO PLAYER</p>
+    </div>
+
+    <form (submit)="onLogin(); $event.preventDefault()">
+      <div class="form-group">
+        <label>E-mail</label>
+        <div class="input-wrapper">
+          <span class="icon">📧</span>
+          <input type="email" name="email" [(ngModel)]="email" placeholder="seu@email.com" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Senha</label>
+        <div class="input-wrapper">
+          <span class="icon">🔒</span>
+          <input type="password" name="password" [(ngModel)]="password" placeholder="••••••••" required>
+        </div>
+      </div>
+
+      <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading">
+        {{ loading ? 'ENTRANDO...' : 'ENTRAR NO PLAYER' }}
+      </button>
+    </form>
+
+    <div class="footer-links">
+      <p>Não tem uma conta? <a routerLink="/register">Cadastre-se</a></p>
+    </div>
+  </div>
+
+  <div class="bg-blobs">
+    <div class="blob red"></div>
+    <div class="blob purple"></div>
+  </div>
+</div>

@@ -1,0 +1,75 @@
+<div class="library-container">
+  <!-- Header com ações -->
+  <div class="library-header glassmorphism">
+    <h2>BIBLIOTECA</h2>
+    <div class="header-actions">
+      <button class="btn-action-premium" (click)="saveAsPlaylist()" *ngIf="audioService.currentTracks().length > 3">
+        <span class="btn-icon">💾</span> Salvar Playlist
+      </button>
+      <input type="file" #folderInput (change)="onFolderSelected($event)" webkitdirectory directory mozdirectory style="display: none">
+      <button class="btn-action-premium" (click)="triggerFolderPicker()">
+        <span class="btn-icon">📂</span> Abrir Pasta
+      </button>
+      <input type="file" #fileInput (change)="onFileSelected($event)" accept="audio/*" multiple style="display: none">
+      <button class="btn-action-premium" (click)="fileInput.click()">
+        <span class="btn-icon">🎵</span> Carregar Arquivos
+      </button>
+    </div>
+  </div>
+
+  <!-- Lista de Músicas -->
+  <div class="section tracks-section">
+    <h3>MÚSICAS ({{ audioService.currentTracks().length }})</h3>
+    <div class="track-list" *ngIf="audioService.currentTracks().length > 0">
+      <div class="track-card glassmorphism touch-target" *ngFor="let track of audioService.currentTracks(); let i = index"
+           [class.active]="i === audioService.currentTrackIndex()"
+           (click)="selectMusica(i)">
+        <div class="track-art">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+        </div>
+        <div class="track-info">
+          <h4 class="track-name">{{ track.name }}</h4>
+          <p class="track-meta">Local • {{ (track.size / 1048576).toFixed(1) }} MB</p>
+        </div>
+        <div class="track-actions">
+          <button class="btn-icon favorite-btn" [class.favorited]="isFavorite(track)" (click)="toggleFavorite(track); $event.stopPropagation()">
+            <svg width="18" height="18" viewBox="0 0 24 24" [attr.fill]="isFavorite(track) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+          <span class="track-duration">{{ formatTime(track.duration) }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="empty-state glassmorphism" *ngIf="audioService.currentTracks().length === 0">
+      <div class="icon">📂</div>
+      <h3>Nenhuma música carregada</h3>
+      <p>Clique em "Abrir Pasta" ou "Carregar Arquivos" para adicionar músicas.</p>
+    </div>
+  </div>
+
+  <!-- Playlists Salvas -->
+  <div class="section playlists-section">
+    <h3>PLAYLISTS ({{ playlistsSalvas.length }})</h3>
+    <div class="playlists-grid" *ngIf="playlistsSalvas.length > 0">
+      <div class="playlist-card glassmorphism" *ngFor="let p of playlistsSalvas; let i = index">
+        <div class="card-icon">🎵</div>
+        <div class="card-info">
+          <h4>{{ p.nome }}</h4>
+          <span>{{ p.musicas?.length || 0 }} Faixas</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-text" (click)="loadPlaylist(p)">Carregar</button>
+          <button class="btn-text delete" (click)="excluirPlaylist(i)">Excluir</button>
+        </div>
+      </div>
+    </div>
+    <div class="empty-state glassmorphism" *ngIf="playlistsSalvas.length === 0">
+      <div class="icon">📋</div>
+      <h3>Nenhuma playlist salva</h3>
+      <p>Salve sua playlist atual para acesso rápido.</p>
+    </div>
+  </div>
+</div>

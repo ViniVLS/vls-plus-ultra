@@ -1,0 +1,61 @@
+<div class="browse-container">
+  <div class="browse-header glassmorphism">
+    <h2>EXPLORAR</h2>
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="onSearch()"
+        placeholder="Buscar música ou artista..."
+        class="pixel-input">
+      <button class="btn-icon" (click)="onSearch()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+      <button class="btn-icon" (click)="clearSearch()" *ngIf="searchQuery">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="search-results" *ngIf="searchResults.length > 0">
+    <div class="results-header">
+      <span>{{ searchResults.length }} resultado(s) encontrado(s)</span>
+    </div>
+    <div class="track-list">
+      <div class="track-card glassmorphism touch-target" *ngFor="let track of searchResults; let i = index" (click)="selectTrack(i)">
+        <div class="track-art">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+        </div>
+        <div class="track-info">
+          <h4 class="track-name">{{ track.name }}</h4>
+          <p class="track-meta">Local • {{ (track.size / 1048576).toFixed(1) }} MB</p>
+        </div>
+        <button class="btn-icon play-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state glassmorphism" *ngIf="!searchQuery && searchResults.length === 0">
+    <div class="icon">🔍</div>
+    <h3>Buscar Músicas</h3>
+    <p>Digite o nome de uma música ou artista para buscar na sua biblioteca.</p>
+  </div>
+
+  <div class="no-results glassmorphism" *ngIf="searchQuery && searchResults.length === 0 && !isSearching">
+    <div class="icon">😕</div>
+    <h3>Nenhum resultado</h3>
+    <p>Tente buscar por outro termo ou adicione mais músicas à sua biblioteca.</p>
+  </div>
+</div>
