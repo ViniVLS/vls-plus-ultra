@@ -58,35 +58,48 @@ export class AuthService {
   }
 
   private async syncProfile(supabaseUser: any) {
-    const { data: profile } = await this.supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', supabaseUser.id)
-      .single();
+    try {
+      const { data: profile, error } = await this.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', supabaseUser.id)
+        .single();
 
-    const user: User = {
-      id: supabaseUser.id,
-      email: supabaseUser.email!,
-      username: profile?.username || 'Usuário',
-      fullName: profile?.full_name,
-      cpf: profile?.cpf,
-      phone: profile?.phone,
-      address: profile?.address
-    };
-    
-    this.currentUser.set(user);
-    await this.db.set('settings', { key: 'current_session', data: user });
+      if (profile) {
+        const user: User = {
+          id: supabaseUser.id,
+          email: supabaseUser.email!,
+          username: profile.username || 'Usuário',
+          fullName: profile.full_name,
+          cpf: profile.cpf,
+          phone: profile.phone,
+          address: profile.address
+        };
+        
+        this.currentUser.set(user);
+        await this.db.set('settings', { key: 'current_session', data: user });
+      }
+    } catch (e) {
+      // Falha silenciosa: mantém os dados que já temos no sinal (offline)
+      console.log('Não foi possível sincronizar perfil com a nuvem (Offline).');
+    }
   }
 
   private async checkSession() {
-    const { data: { session } } = await this.supabase.auth.getSession();
-    if (session?.user) {
-      await this.syncProfile(session.user);
-    } else {
-      const savedUser = await this.db.get('settings', 'current_session');
-      if (savedUser) {
-        this.currentUser.set(savedUser.data);
+    // Carregamento Local Imediato (Offline-First)
+    const savedUser = await this.db.get('settings', 'current_session');
+    if (savedUser) {
+      this.currentUser.set(savedUser.data);
+    }
+
+    // Validação em segundo plano (Cloud)
+    try {
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (session?.user) {
+        await this.syncProfile(session.user);
       }
+    } catch (e) {
+      console.log('Ambiente Offline: Mantendo sessão local.');
     }
   }
 
