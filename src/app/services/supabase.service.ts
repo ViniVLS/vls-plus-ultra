@@ -154,4 +154,21 @@ export class SupabaseService {
     const lib = await this.db.get('settings', 'last_library');
     return lib ? lib.data : [];
   }
+
+  async updateVideoProgress(userId: string, videoId: string, progress: number) {
+    const key = `progress_${userId}_${videoId}`;
+    await this.db.set('settings', { 
+      key, 
+      data: { progress, updatedAt: Date.now() } 
+    });
+  }
+
+  async getVideoProgress(userId: string, videoId: string) {
+    const data = await this.db.get('settings', `progress_${userId}_${videoId}`);
+    return data ? data.data : null;
+  }
+
+  getCurrentUser() {
+    return null;
+  }
 }

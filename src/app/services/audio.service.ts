@@ -1,6 +1,7 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { EqualizerService } from '../equalizer/equalizer.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -19,6 +20,7 @@ export class AudioService {
   
   constructor(
     private supabase: SupabaseService,
+    private authService: AuthService,
     private equalizer: EqualizerService
   ) {
     this.audio.ontimeupdate = () => {
@@ -38,7 +40,7 @@ export class AudioService {
 
     // Efeito para parar a música se o usuário sair
     effect(() => {
-      const user = this.supabase.getCurrentUser();
+      const user = this.authService.user();
       if (!user) {
         this.stop();
       }
