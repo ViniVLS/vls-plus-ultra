@@ -7,12 +7,12 @@ import { DatabaseService } from './database.service';
   providedIn: 'root'
 })
 export class SupabaseService {
-  private supabase: SupabaseClient;
+  public client: SupabaseClient;
   private currentUser = signal<any>(null);
   private isOnline = signal<boolean>(navigator.onLine);
 
   constructor(private db: DatabaseService) {
-    this.supabase = createClient(
+    this.client = createClient(
       environment.supabase.url,
       environment.supabase.key
     );
@@ -30,7 +30,7 @@ export class SupabaseService {
     // Tentar refrescar com supabase se online
     if (this.isOnline()) {
       try {
-        const { data: { user } } = await this.supabase.auth.getUser();
+        const { data: { user } } = await this.client.auth.getUser();
         if (user) {
           await this.db.set('settings', { key: 'current_user', data: user });
           this.currentUser.set(user);
@@ -55,7 +55,7 @@ export class SupabaseService {
 
   async signUp(email: string, pass: string) {
     if (this.isOnline()) {
-      const { data, error } = await this.supabase.auth.signUp({ email, password: pass });
+      const { data, error } = await this.client.auth.signUp({ email, password: pass });
       if (data.user) {
         await this.db.set('settings', { key: 'current_user', data: data.user });
         this.currentUser.set(data.user);
@@ -70,7 +70,7 @@ export class SupabaseService {
 
   async signIn(email: string, pass: string) {
     if (this.isOnline()) {
-      const { data, error } = await this.supabase.auth.signInWithPassword({ email, password: pass });
+      const { data, error } = await this.client.auth.signInWithPassword({ email, password: pass });
       if (data.user) {
         await this.db.set('settings', { key: 'current_user', data: data.user });
         this.currentUser.set(data.user);
@@ -89,7 +89,7 @@ export class SupabaseService {
     await this.db.delete('settings', 'current_user');
     this.currentUser.set(null);
     if (this.isOnline()) {
-      await this.supabase.auth.signOut();
+      await this.client.auth.signOut();
     }
   }
 
@@ -139,7 +139,7 @@ export class SupabaseService {
     await this.db.set('playlists', playlist);
     
     if (this.isOnline() && this.currentUser() && !this.currentUser().id.startsWith('local_')) {
-      await this.supabase.from('playlists').upsert({
+      await this.client.from('playlists').upsert({
         user_id: this.currentUser().id,
         name: name,
         tracks: tracks
@@ -151,7 +151,7 @@ export class SupabaseService {
   async getPlaylists() {
     const local = await this.db.getAll('playlists');
     if (this.isOnline() && this.currentUser() && !this.currentUser().id.startsWith('local_')) {
-      const { data } = await this.supabase.from('playlists').select('*').eq('user_id', this.currentUser().id);
+      const { data } = await this.client.from('playlists').select('*').eq('user_id', this.currentUser().id);
       return data || local;
     }
     return local;
