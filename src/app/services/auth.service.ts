@@ -109,14 +109,18 @@ export class AuthService {
       this.currentUser.set(savedUser.data);
     }
 
-    // Validação em segundo plano (Cloud)
+    // Validação em segundo plano (Cloud) - Não usar await para não bloquear a inicialização!
+    this.validateSessionCloud();
+  }
+
+  private async validateSessionCloud() {
     try {
       const { data: { session } } = await this.supabase.auth.getSession();
       if (session?.user) {
         await this.syncProfile(session.user);
       }
     } catch (e) {
-      console.log('Ambiente Offline: Mantendo sessão local.');
+      console.log('Ambiente Offline/Rede instável: Mantendo sessão local.');
     }
   }
 

@@ -85,6 +85,7 @@ export class AudioService {
       artist: track.artist || this.extractArtist(track),
       duration: track.duration,
       size: track.size,
+      nativeUrl: track.nativeUrl || undefined,
       playedAt: Date.now()
     };
     
@@ -198,12 +199,17 @@ export class AudioService {
     
     for (let i = 0; i < tracks.length; i += batchSize) {
       const batch = tracks.slice(i, i + batchSize);
-      const results = await Promise.all(batch.map(async (file) => ({
-        file: file,
-        name: file.name,
-        size: file.size,
-        duration: await this.getDuration(file)
-      })));
+      const results = await Promise.all(batch.map(async (file) => {
+        const hasDuration = typeof file.duration === 'number' && file.duration > 0;
+        const duration = hasDuration ? file.duration : await this.getDuration(file);
+        return {
+          file: file instanceof File ? file : undefined,
+          name: file.name,
+          size: file.size,
+          nativeUrl: file.nativeUrl || undefined,
+          duration: duration
+        };
+      }));
       tracksWithMetadata.push(...results);
     }
     
@@ -211,24 +217,42 @@ export class AudioService {
     this.selectTrack(index);
   }
 
-  private getDuration(file: File): Promise<number> {
+  private getDuration(file: any): Promise<number> {
     return new Promise((resolve) => {
-      const audio = new Audio();
-      const url = URL.createObjectURL(file);
-      audio.src = url;
-      audio.onloadedmetadata = () => {
-        URL.revokeObjectURL(url);
-        resolve(audio.duration);
-      };
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
+      try {
+        const audio = new Audio();
+        let url = '';
+        if (file instanceof File) {
+          url = URL.createObjectURL(file);
+        } else if (file && file.nativeUrl) {
+          url = file.nativeUrl;
+        } else {
+          resolve(0);
+          return;
+        }
+        audio.src = url;
+        audio.onloadedmetadata = () => {
+          if (file instanceof File) {
+            URL.revokeObjectURL(url);
+          }
+          resolve(audio.duration);
+        };
+        audio.onerror = () => {
+          if (file instanceof File) {
+            URL.revokeObjectURL(url);
+          }
+          resolve(0);
+        };
+        // Timeout de segurança para não travar
+        setTimeout(() => {
+          if (file instanceof File) {
+            URL.revokeObjectURL(url);
+          }
+          resolve(0);
+        }, 5000);
+      } catch (e) {
         resolve(0);
-      };
-      // Timeout de segurança para não travar
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        resolve(0);
-      }, 5000);
+      }
     });
   }
 
@@ -236,15 +260,23 @@ export class AudioService {
     const tracks = this.currentTracks();
     const trackObj = tracks[index];
     
-    if (trackObj && trackObj.file) {
-      // Limpeza segura de URLs antigas
-      if (this.audio.src && this.audio.src.startsWith('blob:')) {
-        URL.revokeObjectURL(this.audio.src);
+    if (trackObj) {
+      if (trackObj.file) {
+        // Limpeza segura de URLs antigas
+        if (this.audio.src && this.audio.src.startsWith('blob:')) {
+          URL.revokeObjectURL(this.audio.src);
+        }
+        
+        this.audio.src = URL.createObjectURL(trackObj.file);
+        this.extractMetadata(trackObj.file);
+      } else if (trackObj.nativeUrl) {
+        this.audio.src = trackObj.nativeUrl;
+        this.updateMediaNotification();
+      } else {
+        return;
       }
       
-      this.audio.src = URL.createObjectURL(trackObj.file);
       this.audio.load();
-      this.extractMetadata(trackObj.file);
       this.addToRecentTracks(trackObj);
     }
   }

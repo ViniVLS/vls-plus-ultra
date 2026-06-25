@@ -41,7 +41,7 @@ export class DatabaseService {
   async set(storeName: string, value: any): Promise<void> {
     if (this.isNative) {
       // No Android, salvamos como arquivo na pasta VLSPLUS_TEMP
-      const key = value.key || value.id || 'data_' + Date.now();
+      const key = value.key || value.id || value.id_local || 'data_' + Date.now();
       await this.fs.writeFile(`${storeName}_${key}.json`, JSON.stringify(value));
       return;
     }
@@ -73,7 +73,7 @@ export class DatabaseService {
 
   async delete(storeName: string, key: any): Promise<void> {
     if (this.isNative) {
-      // Implementar delete no Filesystem se necessário
+      await this.fs.deleteFile(`${storeName}_${key}.json`);
       return;
     }
     return this.runTransaction(storeName, 'readwrite', (store) => store.delete(key));

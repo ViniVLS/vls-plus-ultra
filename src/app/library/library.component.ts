@@ -5,6 +5,8 @@ import { AudioService } from '../services/audio.service';
 import { SupabaseService } from '../services/supabase.service';
 import { ToastService } from '../services/toast.service';
 import { DialogService } from '../services/dialog.service';
+import { VlsFilesystemService } from '../services/filesystem.service';
+import { Capacitor } from '@capacitor/core';
 
 @Component({
   selector: 'app-library',
@@ -25,7 +27,8 @@ export class LibraryComponent implements OnInit {
     public audioService: AudioService,
     private supabase: SupabaseService,
     private toast: ToastService,
-    private dialog: DialogService
+    private dialog: DialogService,
+    private fs: VlsFilesystemService
   ) {}
 
   async ngOnInit() {
@@ -69,6 +72,39 @@ export class LibraryComponent implements OnInit {
     this.folderInput.nativeElement.click();
   }
 
+  async processAudioFiles(audioFiles: File[]): Promise<any[]> {
+    const isNative = Capacitor.isNativePlatform();
+    const processed = [];
+    
+    if (isNative) {
+      this.loading = true;
+      this.toast.info(`Importando ${audioFiles.length} músicas para o app...`);
+      
+      for (let i = 0; i < audioFiles.length; i++) {
+        const file = audioFiles[i];
+        try {
+          const nativeUrl = await this.fs.saveNativeAudio(file.name, file);
+          processed.push({
+            name: file.name,
+            size: file.size,
+            nativeUrl: nativeUrl
+          });
+        } catch (err) {
+          console.warn(`Erro ao copiar arquivo ${file.name}:`, err);
+          processed.push({
+            name: file.name,
+            size: file.size
+          });
+        }
+      }
+      this.loading = false;
+    } else {
+      processed.push(...audioFiles);
+    }
+    
+    return processed;
+  }
+
   async onFolderSelected(event: any) {
     const files: FileList = event.target.files;
     if (files.length > 0) {
@@ -78,8 +114,10 @@ export class LibraryComponent implements OnInit {
                ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac'].some(ext => name.endsWith(ext));
       });
 
-      this.audioService.setTracks(audioFiles, 0);
-      await this.supabase.saveLibrary(audioFiles);
+      const processedTracks = await this.processAudioFiles(audioFiles);
+      await this.audioService.setTracks(processedTracks, 0);
+      await this.supabase.saveLibrary(this.audioService.currentTracks());
+      
       this.audioService.play();
       this.toast.success('Pasta carregada com sucesso!');
     }
@@ -95,9 +133,11 @@ export class LibraryComponent implements OnInit {
       });
 
       if (audioFiles.length > 0) {
+        const processedTracks = await this.processAudioFiles(audioFiles);
         const current = this.audioService.currentTracks();
-        this.audioService.setTracks([...current, ...audioFiles], this.audioService.currentTrackIndex());
-        await this.supabase.saveLibrary([...current, ...audioFiles]);
+        await this.audioService.setTracks([...current, ...processedTracks], this.audioService.currentTrackIndex());
+        await this.supabase.saveLibrary(this.audioService.currentTracks());
+        
         this.toast.info(`${audioFiles.length} arquivos adicionados.`);
       }
     }
@@ -122,7 +162,12 @@ export class LibraryComponent implements OnInit {
     if (name) {
       this.loading = true;
       try {
-        const trackData = tracks.map(t => ({ name: t.name, size: t.size }));
+        const trackData = tracks.map(t => ({ 
+          name: t.name, 
+          size: t.size,
+          duration: t.duration,
+          nativeUrl: t.nativeUrl || undefined
+        }));
         await this.supabase.savePlaylist(name, trackData);
         await this.loadPlaylists();
         this.toast.success('Playlist salva e sincronizada!');
@@ -135,17 +180,21 @@ export class LibraryComponent implements OnInit {
   }
 
   async loadPlaylist(playlist: any) {
-    const allTracks = this.audioService.currentTracks();
-    const playlistTrackNames = (playlist.musicas || playlist.tracks || []).map((t: any) => typeof t === 'string' ? t : t.name);
-
-    const loadedTracks = allTracks.filter(t => playlistTrackNames.includes(t.name));
+    const playlistTracks = playlist.musicas || playlist.tracks || [];
     
-    if (loadedTracks.length > 0) {
-      this.audioService.setTracks(loadedTracks, 0);
+    if (playlistTracks.length > 0) {
+      const tracksToLoad = playlistTracks.map((t: any) => ({
+        name: t.name || t,
+        size: t.size || 0,
+        duration: t.duration || 0,
+        nativeUrl: t.nativeUrl || undefined
+      }));
+      
+      await this.audioService.setTracks(tracksToLoad, 0);
       this.audioService.play();
       this.toast.info(`Playlist "${playlist.nome || playlist.name}" carregada.`);
     } else {
-      this.toast.warning('Músicas não encontradas na biblioteca atual.');
+      this.toast.warning('Esta playlist está vazia.');
     }
   }
 
@@ -179,7 +228,12 @@ export class LibraryComponent implements OnInit {
       this.favorites.splice(index, 1);
       this.toast.info('Removido dos favoritos.');
     } else {
-      this.favorites.push({ name: track.name, size: track.size });
+      this.favorites.push({ 
+        name: track.name, 
+        size: track.size,
+        duration: track.duration,
+        nativeUrl: track.nativeUrl || undefined
+      });
       this.toast.success('Adicionado aos favoritos!');
     }
     await this.supabase.saveFavorites(this.favorites);
